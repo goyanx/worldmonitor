@@ -1,3 +1,4 @@
+import { isAuthDisabled } from '@/config/auth-mode';
 import type { PanelConfig, MapLayers, DataSourceId } from '@/types';
 import { SITE_VARIANT } from './variant';
 // boundary-ignore: isDesktopRuntime is a pure env probe with no service dependencies
@@ -1267,6 +1268,20 @@ export function isPanelInVariantDefaults(key: string): boolean {
 }
 
 export const FREE_MAX_PANELS = 40;
+
+/**
+ * Is the free-tier panel cap enforced at all?
+ *
+ * False in `VITE_DISABLE_AUTH` builds. The cap exists to sell a plan, and it is
+ * enforced entirely in the browser over panels the page already knows how to
+ * render — nothing server-side depends on it, exactly like the export gate and
+ * the dashboard tab cap. With no plan to buy, capping is just a limit with no
+ * way past it. Premium panels stay gated on their own terms and keep rendering
+ * NOT IMPLEMENTED; this only governs HOW MANY panels may be on at once.
+ */
+export function isFreePanelCapActive(): boolean {
+  return !isAuthDisabled();
+}
 export const FREE_MAX_SOURCES = 80;
 
 export function isFreePanelCapCounted(key: string): boolean {
@@ -1334,7 +1349,9 @@ export function enforceFreePanelLimit(
   panelSettings: Record<string, PanelConfig>,
   isPro: boolean,
 ): Record<string, PanelConfig> {
-  if (isPro) return restoreProGatedPanels(panelSettings);
+  // restoreProGatedPanels also un-stamps panels a PREVIOUS capped run disabled,
+  // so switching the flag on recovers a layout that was clamped before it.
+  if (isPro || !isFreePanelCapActive()) return restoreProGatedPanels(panelSettings);
 
   const next: Record<string, PanelConfig> = {};
   for (const [key, config] of Object.entries(panelSettings)) {

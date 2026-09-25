@@ -14,6 +14,7 @@ import {
   FREE_MAX_PANELS,
   countFreePanelCapUsage,
   getEffectivePanelConfig,
+  isFreePanelCapActive,
   isFreePanelCapCounted,
   isPanelEntitled,
 } from '@/config';
@@ -697,7 +698,8 @@ export class SearchManager implements AppModule {
           return allowPendingPanelTarget || this.hasLivePanelTarget(panelId);
         }
         if (premium) return true;
-        return !isFreePanelCapCounted(panelId)
+        return !isFreePanelCapActive()
+          || !isFreePanelCapCounted(panelId)
           || countFreePanelCapUsage(this.ctx.panelSettings) < FREE_MAX_PANELS;
       }
       case 'layer':
