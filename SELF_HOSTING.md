@@ -149,6 +149,53 @@ between nginx and the sidecar. It preserves the client's `Authorization`
 header. The transport token does not grant MCP access: operator keys still
 use `X-WorldMonitor-Key`, and OAuth requires the hosted identity services.
 
+## Remote dashboard control
+
+An MCP caller can drive the dashboard you have open — map view and layers,
+globe/flat mode, panels, tabs, missions, search — through the `control_dashboard`
+tool.
+
+The dashboard's UI actions have always existed as **WebMCP** tools, but those
+live in the page and only an agent running inside the browser can reach them. An
+agent connected to `/mcp` over HTTP is a different process. This bridges the two:
+the MCP tool queues a command, the open dashboard polls for it and runs it
+through the *same* handler, then reports back.
+
+Off by default. It needs **both** halves:
+
+```bash
+WM_UI_REMOTE_CONTROL=true VITE_UI_REMOTE_CONTROL=true docker compose up -d --build
+```
+
+The server flag alone is a queue nobody drains; the browser flag alone polls an
+endpoint that answers 503.
+
+```bash
+# What can it do, and is anything listening?
+curl -s -X POST http://localhost:3000/mcp   -H 'Content-Type: application/json'   -H 'Accept: application/json, text/event-stream'   -H "X-WorldMonitor-Key: $WM_KEY"   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call",
+       "params":{"name":"get_dashboard_control_status","arguments":{}}}'
+```
+
+That returns the action catalog **and the exact input schema for each one**,
+published by the dashboard itself — so a caller never has to guess whether
+`set_map_view` takes `lat`/`lon` or `latitude`/`longitude`.
+
+**Before enabling it, know what it is.** Anyone holding an operator key can move
+a UI you are looking at. The design limits the blast radius rather than relying
+on the flag alone:
+
+- Only allowlisted actions cross (`shared/ui-control.ts`). Account actions and
+  anything that deletes saved layout are excluded by construction, so adding a
+  WebMCP tool never silently widens the remote surface.
+- Commands expire after 120 s, so a dashboard opened later never replays stale
+  intent.
+- Each command is delivered once, to one dashboard.
+- A hidden browser tab stops claiming commands, so it cannot drain them away
+  from the window you are actually watching.
+
+Treat it as a trusted-network feature for a self-hosted stack, not something to
+expose publicly.
+
 ## 🔑 API Keys
 
 Create a `docker-compose.override.yml` to inject your keys. This file is **gitignored** — your secrets stay local.

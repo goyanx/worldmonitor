@@ -3,12 +3,12 @@
   "kind": "product",
   "description": "WorldMonitor's live global-intelligence stack as an MCP server: real-time markets, conflict events, aviation, maritime, energy, climate, health, displacement, supply chain, and AI-generated regional briefs.",
   "icon": "https://www.worldmonitor.app/favico/apple-touch-icon.png",
-  "version": "1.21.0",
+  "version": "1.22.0",
   "url": "https://worldmonitor.app/mcp",
   "serverUrl": "https://worldmonitor.app/mcp",
   "serverInfo": {
     "name": "worldmonitor",
-    "version": "1.21.0",
+    "version": "1.22.0",
     "description": "WorldMonitor's live global-intelligence stack as an MCP server: real-time markets, conflict events, aviation, maritime, energy, climate, health, displacement, supply chain, and AI-generated regional briefs.",
     "vendor": "WorldMonitor",
     "homepage": "https://www.worldmonitor.app"
@@ -555,6 +555,20 @@
       "description": "WorldMonitor's live source inventory, for deciding whether and how far to trust what the other tools return. Two separate populations: `providers` are upstream hosts data is fetched from (with licence and attribution status), and `outlets` are named public source identities carrying an editorial tier plus propaganda-risk and source-type provenance. Platform channels include stable platform identities instead of pretending every source is a newsroom masthead. Defaults to `summary` (counts only); pass a view to enumerate. Static registry read — no network, no cache, always current with the deployed build.",
       "_meta": {
         "worldmonitor/access": "free"
+      }
+    },
+    {
+      "name": "control_dashboard",
+      "description": "Drive the open WorldMonitor dashboard: map view and layers, globe/flat mode, panels, tabs, missions, search. Queues one action for the browser to run and returns what it did. Requires a dashboard to be open with remote control enabled.",
+      "_meta": {
+        "worldmonitor/access": "subscription"
+      }
+    },
+    {
+      "name": "get_dashboard_control_status",
+      "description": "Whether a WorldMonitor dashboard is currently listening for remote control commands, and the catalog of actions it accepts. Call this before control_dashboard to avoid queueing into an empty room.",
+      "_meta": {
+        "worldmonitor/access": "subscription"
       }
     }
   ],

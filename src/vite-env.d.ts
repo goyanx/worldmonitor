@@ -18,6 +18,7 @@ interface ImportMetaEnv {
   readonly VITE_SENTRY_DSN?: string;
   readonly VITE_WS_API_URL?: string;
   readonly VITE_DISABLE_AUTH?: string;
+  readonly VITE_UI_REMOTE_CONTROL?: string;
 }
 
 interface ImportMeta {

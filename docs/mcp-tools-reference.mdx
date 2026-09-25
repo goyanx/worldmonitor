@@ -2677,3 +2677,95 @@ curl -s https://worldmonitor.app/mcp \
 ```
 
 </CodeGroup>
+
+---
+
+## Dashboard control
+
+The only tools here that **change what a person sees**. Everything else on this
+page reads data; these reach into a browser someone has open and move its
+interface. Both carry `readOnlyHint: false` in `tools/list` — a client that
+auto-retries reads must not treat them the same way.
+
+They do not implement any UI behaviour. The dashboard already exposes its
+panels, map/globe, tabs and search as WebMCP tools registered into
+`navigator.modelContext`, reachable only by an agent running inside the page.
+These two carry an intent across that process boundary to the **same handlers**,
+so the remote path and the in-page path cannot drift.
+
+**Disabled by default.** Requires `WM_UI_REMOTE_CONTROL=true` on the server *and*
+a frontend built with `VITE_UI_REMOTE_CONTROL=true`. Either half alone is a queue
+nobody drains. Intended for a self-hosted stack on a trusted network.
+
+### `control_dashboard`
+
+Queues one UI action for the open dashboard and, by default, waits for it to
+report back.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `action` | string (enum) | **yes** | The UI action. See the catalog below, or call `get_dashboard_control_status`. |
+| `args` | object | no | Passed through unchanged to the dashboard handler. **Do not guess argument names** — call `get_dashboard_control_status` for the authoritative per-action JSON Schema, which the open dashboard publishes from its own handlers. (For example `set_map_view` takes `lat`/`lon`, not `latitude`/`longitude`.) |
+| `wait_ms` | integer 0-15000 | no | How long to wait for the result. Default 5000. `0` queues and returns immediately. |
+
+**Action catalog.** Map and globe: `set_map_view`, `set_map_layers`,
+`set_map_mode`, `focus_country`, `set_time_range`, `list_map_layers`. Panels:
+`open_dashboard_panel`, `set_panel_enabled`, `set_panel_collapsed`,
+`set_panel_fullscreen`, `move_panel`, `get_panel_layout`,
+`list_dashboard_panels`. Tabs and navigation: `list_dashboard_tabs`,
+`select_dashboard_tab`, `switch_monitor`, `open_country_brief`, `open_settings`,
+`open_alerts`. Missions and search: `list_mission_presets`,
+`apply_mission_preset`, `search_dashboard`. Read-back: `get_dashboard_context`.
+
+The catalog is a deliberate **subset** of what the page can do. Account actions
+(`open_sign_in`, `set_country_followed`) and anything that destroys saved layout
+(`delete_dashboard_tab`, tab create/rename) are excluded by construction, so
+adding a WebMCP tool never silently widens the remote surface.
+
+- **`dashboardOpen: false` means nothing is listening.** The command is queued
+  and may never run. Check it before reporting success — queueing into an empty
+  room succeeds at the storage layer and achieves nothing.
+- **`completed: false` is not failure.** The browser may still run it; you just
+  did not wait long enough. `ok` is present only when `completed` is true.
+- **Commands expire after 120s.** A dashboard that opens later will not replay
+  stale intent.
+- **Delivered once.** Two dashboards open means each gets a share, not a copy.
+- **API endpoints:** none — internal bridge transport, not a published REST operation.
+- **Access:** `subscription`.
+
+### `get_dashboard_control_status`
+
+Whether a dashboard is currently listening, the action catalog, and the
+**authoritative input schema for every action**. Takes no arguments. Does not
+consume queued commands.
+
+The schemas come from the dashboard itself: the page publishes what its handlers
+actually accept on its first poll. They are not restated on the server, because a
+restated copy drifts — this one did, documenting `set_map_view` as
+`latitude`/`longitude` when the handler takes `lat`/`lon`. Call this before
+`control_dashboard` rather than guessing, and rather than discovering an empty
+room from a warning.
+
+A rejected argument comes back as `ok: false` with the dashboard's own `error`
+message, not as an exception.
+
+- **API endpoints:** none.
+- **Access:** `subscription`.
+
+<CodeGroup>
+
+```bash curl
+curl -s http://localhost:3000/mcp \
+  -H "X-WorldMonitor-Key: $WM_KEY" \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{
+    "jsonrpc":"2.0","id":1,
+    "method":"tools/call",
+    "params":{"name":"control_dashboard","arguments":{
+      "action":"focus_country","args":{"country_code":"IR"}
+    }}
+  }'
+```
+
+</CodeGroup>

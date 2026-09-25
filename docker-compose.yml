@@ -18,6 +18,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_DISABLE_AUTH: "${VITE_DISABLE_AUTH:-false}"
+        VITE_UI_REMOTE_CONTROL: "${VITE_UI_REMOTE_CONTROL:-false}"
     image: worldmonitor:latest
     container_name: worldmonitor
     ports:
@@ -29,6 +30,10 @@ services:
       # Redis from free public APIs instead of rendering every panel empty.
       # Leave unset if something else already writes to this Redis.
       WM_SELF_HOST_SEEDING: "${WM_SELF_HOST_SEEDING:-true}"
+      # Let an MCP caller drive the open dashboard (control_dashboard). Off by
+      # default: it lets anyone holding the operator key move a UI the user is
+      # looking at. Needs VITE_UI_REMOTE_CONTROL=true at build time too.
+      WM_UI_REMOTE_CONTROL: "${WM_UI_REMOTE_CONTROL:-false}"
       WM_SESSION_SECRET: "${WM_SESSION_SECRET:?WM_SESSION_SECRET required — generate with: openssl rand -hex 32}"
       LOCAL_API_PORT: "46123"
       LOCAL_API_MODE: "docker"

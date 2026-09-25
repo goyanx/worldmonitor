@@ -14,7 +14,7 @@ where self-hosted behaviour differs from `worldmonitor.app`, this file says so.
 | Transport | Streamable HTTP (MCP `2025-06-18`) |
 | Auth header | `X-WorldMonitor-Key: <key>` |
 | Key location | `WORLDMONITOR_VALID_KEYS` in the repo's `.env` |
-| Server | `worldmonitor` v1.21.0, **75 tools** |
+| Server | `worldmonitor` v1.22.0, **77 tools** |
 
 ```json
 {
@@ -65,7 +65,8 @@ Eurostat, IMF, World Bank, Ember). 33 credential-free seeders run in-container;
 12 more are skipped because they need a vendor key nobody has configured.
 
 So tool coverage is genuinely partial, and the gaps are *structural*, not
-transient. All 75 tools probed with empty arguments:
+transient. All 75 data tools probed with empty arguments (the 2 dashboard-control
+tools added later are covered in §5):
 
 **Returns data now (32).** `get_world_brief` `get_conflict_events`
 `get_news_intelligence` `get_natural_disasters` `get_military_posture`
@@ -162,32 +163,68 @@ line as "health data is broken".
 
 ---
 
-## 5. Controlling the UI — read this before trying
+## 5. Controlling the UI
 
-The dashboard *does* expose ~33 tools for driving panels, the map/globe, tabs and
-search: `setMapView`, `setMapLayers`, `setMapMode`, `focusCountry`,
-`openDashboardPanel`, `setPanelEnabled`, `setPanelCollapsed`, `movePanel`,
-`setPanelFullscreen`, `getPanelLayout`, `listDashboardTabs`, `selectDashboardTab`,
-`createDashboardTab`, `setTimeRange`, `applyMissionPreset`, `searchDashboard`,
-and more (`src/services/webmcp.ts`).
+You **can** drive the dashboard now — this changed on 2026-09-25. Earlier notes
+saying UI control is unreachable over HTTP are out of date.
 
-**You cannot reach them over HTTP.** They are **WebMCP** tools: the page registers
-them into `navigator.modelContext`, an API injected by a WebMCP-capable agent host
-running *inside the browser*. They are not exposed on `/mcp`, and no bridge
-exists between the two. Verified: `navigator.modelContext` is absent under plain
-automation, so the app registers nothing.
+Two tools:
 
-Practically:
+- **`get_dashboard_control_status`** — is a dashboard listening, what actions
+  exist, and the **exact input schema for each one**. Takes no arguments, does
+  not consume queued commands.
+- **`control_dashboard`** — run one action. `{action, args, wait_ms}`.
 
-- **In-browser agent host** → you get all 33 UI tools, plus the data tools.
-- **HTTP client (how you connect today)** → data tools only. UI control is
-  unavailable, and it is not a bug to report.
+```json
+{"name":"control_dashboard","arguments":{"action":"focus_country","args":{"iso2":"IR"}}}
+```
 
-If the user wants you driving the UI remotely over HTTP, that needs a
-server→browser command bridge that does not exist yet. Say that plainly rather
-than hunting for a tool name.
+### Do not guess argument names
 
----
+Call `get_dashboard_control_status` first and read `schemas`. They are published
+by the dashboard from its own handlers, so they cannot drift. This matters more
+than it sounds: building this, two out of two guesses were wrong —
+`set_map_view` takes `lat`/`lon` (not `latitude`/`longitude`) and
+`focus_country` takes `iso2` (not `country_code`).
+
+### What you can do
+
+Map and globe: `set_map_view`, `set_map_layers`, `set_map_mode` (`2d`/`3d`),
+`focus_country`, `set_time_range`, `list_map_layers`. Panels:
+`open_dashboard_panel`, `set_panel_enabled`, `set_panel_collapsed`,
+`set_panel_fullscreen`, `move_panel`, `get_panel_layout`,
+`list_dashboard_panels`. Tabs and navigation: `list_dashboard_tabs`,
+`select_dashboard_tab`, `switch_monitor`, `open_country_brief`, `open_settings`,
+`open_alerts`. Missions and search: `list_mission_presets`,
+`apply_mission_preset`, `search_dashboard`. Read-back: `get_dashboard_context`.
+
+Account actions and anything that deletes saved layout are deliberately not on
+the list. A refusal there is policy, not a missing feature — do not look for a
+way around it.
+
+### Reading the response
+
+| Field | Means |
+|---|---|
+| `dashboardOpen: false` | **Nothing is listening.** Queued, may never run. Do not report success. |
+| `completed: false` | You did not wait long enough. It may still run. `ok` is absent. |
+| `ok: false` + `error` | The dashboard refused it — usually a bad argument. Read `error`, fix, retry. |
+| `ok: true` | It ran. `result.message` says what changed. |
+
+`wait_ms` defaults to 5000, max 15000. `0` returns immediately and tells you
+nothing about the outcome.
+
+### Manners
+
+These are the only tools here that change what a person sees. Someone may be
+looking at that screen. Prefer the read-only actions when you are orienting
+yourself, say what you are about to move and why, and do not rearrange a layout
+the user did not ask you to touch. Commands expire after 120 s and are delivered
+once, to one dashboard.
+
+If `get_dashboard_control_status` reports `enabled: false`, the stack was not
+built for this — it needs `WM_UI_REMOTE_CONTROL=true` and
+`VITE_UI_REMOTE_CONTROL=true`. Say so rather than retrying.
 
 ## 6. Safety
 

@@ -49,6 +49,11 @@ RUN npm run build:pro
 # upsells (see src/config/auth-mode.ts). Server-side key checks are unchanged.
 ARG VITE_DISABLE_AUTH=false
 ENV VITE_DISABLE_AUTH=$VITE_DISABLE_AUTH
+# VITE_UI_REMOTE_CONTROL=true makes the dashboard poll for MCP-issued UI
+# commands (see src/app/remote-ui-control.ts). The server must also set
+# WM_UI_REMOTE_CONTROL=true; either half alone is inert.
+ARG VITE_UI_REMOTE_CONTROL=false
+ENV VITE_UI_REMOTE_CONTROL=$VITE_UI_REMOTE_CONTROL
 RUN npx tsc && npx vite build
 # Assert the /pro pages survived the public/ -> dist/ copy (#6898). build:pro
 # succeeding proves public/pro/ exists; it does NOT prove Vite copied it, and

@@ -4,6 +4,7 @@ import { SITE_VARIANT } from '@/config/variant';
 import { installLcpAttributionDebug } from '@/bootstrap/lcp-attribution';
 import { markLcpDebug } from '@/utils/lcp-debug';
 import { registerWebMcpTools, type WebMcpAppBindings } from '@/services/webmcp';
+import { startRemoteUiControl } from '@/app/remote-ui-control';
 import { safeStorageGet, safeStorageRemove, safeStorageSet } from '@/utils/safe-storage';
 import { enqueueSentryCall, installPreInitErrorQueue, scheduleSentryInit } from '@/bootstrap/sentry-defer';
 import { registerClsReporting } from '@/bootstrap/cls-report';
@@ -646,6 +647,10 @@ if (urlParams.get('settings') === '1') {
     rejectBindings = reject;
   });
   const webMcpController = registerWebMcpTools(bindings);
+  // Same bindings, second consumer: lets an agent on the HTTP /mcp side reach
+  // the same handlers registerWebMcpTools exposes in-page. No-ops unless the
+  // build set VITE_UI_REMOTE_CONTROL.
+  startRemoteUiControl(bindings);
   // Import and constructor failures must reach the global startup error monitors.
   void import('./App').then(({ App }) => {
     markLcpDebug('wm:boot:app-construct');
