@@ -211,7 +211,15 @@ function resolveEffectiveBannerPremium(): EffectiveBannerPremium {
 export function showProBanner(container: HTMLElement): void {
   // Nothing to upsell in an auth-disabled build. Return before caching the
   // container so the entitlement listener has no mount point to re-open with.
-  if (isAuthDisabled()) return;
+  //
+  // Release the pre-paint reservation on the way out. index.html adds it
+  // before any JS runs so a banner that IS coming does not shift the layout;
+  // here one never is, and leaving it set strands a 40px empty strip above
+  // the dashboard for the life of the page.
+  if (isAuthDisabled()) {
+    setReservation(false);
+    return;
+  }
 
   // Cache container even on early-return paths so the entitlement-change
   // listener can re-mount on a downgrade. App.ts calls this once at init

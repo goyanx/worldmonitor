@@ -1,3 +1,4 @@
+import { isAuthDisabled } from '@/config/auth-mode';
 import type { AppContext } from '@/app/app-context';
 import type { MapView } from '@/components/MapContainer';
 import type { AuthLauncher } from '@/components/AuthLauncher';
@@ -50,6 +51,18 @@ export class MobilePrimaryNav {
   setupAuth(modal: AuthLauncher): void {
     const mobileMount = document.getElementById('mobileAuthWidgetMount');
     const fallback = document.getElementById('mobileAuthFallback') as HTMLButtonElement | null;
+
+    // Auth-disabled build: hide the whole account row. The fallback button is
+    // normally shown only while auth is pending, but that state never resolves
+    // here, so it would sit in the menu permanently opening a modal Clerk
+    // never loaded.
+    if (isAuthDisabled()) {
+      if (fallback) fallback.hidden = true;
+      if (mobileMount) mobileMount.hidden = true;
+      document.querySelector<HTMLElement>('.mobile-menu-account')?.setAttribute('hidden', '');
+      return;
+    }
+
     const openAuth = () => {
       this.closeMenu();
       modal.open();

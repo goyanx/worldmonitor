@@ -894,7 +894,7 @@ export class UnifiedSettings {
           <button class="${tabClass('panels')}" tabindex="${this.activeTab === 'panels' ? 0 : -1}" data-tab="panels" role="tab" aria-selected="${this.activeTab === 'panels'}" id="us-tab-panels" aria-controls="us-tab-panel-panels">${t('header.tabPanels')}</button>
           <button class="${tabClass('sources')}" tabindex="${this.activeTab === 'sources' ? 0 : -1}" data-tab="sources" role="tab" aria-selected="${this.activeTab === 'sources'}" id="us-tab-sources" aria-controls="us-tab-panel-sources">${t('header.tabSources')}</button>
           ${showNotificationsTab ? `<button class="${tabClass('notifications')}" tabindex="${this.activeTab === 'notifications' ? 0 : -1}" data-tab="notifications" role="tab" aria-selected="${this.activeTab === 'notifications'}" id="us-tab-notifications" aria-controls="us-tab-panel-notifications">${t('header.tabNotifications')}</button>` : ''}
-          <button class="${tabClass('api-keys')}" tabindex="${this.activeTab === 'api-keys' ? 0 : -1}" data-tab="api-keys" role="tab" aria-selected="${this.activeTab === 'api-keys'}" id="us-tab-api-keys" aria-controls="us-tab-panel-api-keys">API Keys <span class="panel-pro-badge">PRO</span></button>
+          <button class="${tabClass('api-keys')}" tabindex="${this.activeTab === 'api-keys' ? 0 : -1}" data-tab="api-keys" role="tab" aria-selected="${this.activeTab === 'api-keys'}" id="us-tab-api-keys" aria-controls="us-tab-panel-api-keys">API Keys${isAuthDisabled() ? '' : ' <span class="panel-pro-badge">PRO</span>'}</button>
           ${showEmbedsTab ? `<button class="${tabClass('embeds')}" tabindex="${this.activeTab === 'embeds' ? 0 : -1}" data-tab="embeds" role="tab" aria-selected="${this.activeTab === 'embeds'}" id="us-tab-embeds" aria-controls="us-tab-panel-embeds">Embeds <span class="panel-pro-badge">PRO</span></button>` : ''}
           ${showMcpClientsTab ? `<button class="${tabClass('mcp-clients')}" tabindex="${this.activeTab === 'mcp-clients' ? 0 : -1}" data-tab="mcp-clients" role="tab" aria-selected="${this.activeTab === 'mcp-clients'}" id="us-tab-mcp-clients" aria-controls="us-tab-panel-mcp-clients">MCP Clients <span class="panel-pro-badge">PRO</span></button>` : ''}
         </div>
@@ -1947,8 +1947,37 @@ export class UnifiedSettings {
     }
   }
 
+  /**
+   * API keys in a self-hosted stack.
+   *
+   * Browser key management is a Convex feature (convex/apiKeys.ts) scoped to a
+   * Clerk user. This build has neither, so there is nothing to list, create or
+   * revoke here. What DOES work is the operator key the server already
+   * validates — `WORLDMONITOR_VALID_KEYS` — so this panel documents that path
+   * rather than rendering a form whose first mutation would throw.
+   */
+  private renderSelfHostedApiKeysContent(): string {
+    return `
+      <div class="api-keys-section">
+        <div class="api-keys-header">
+          <p class="api-keys-desc"><strong>NOT IMPLEMENTED</strong> — per-user API keys need the hosted account backend, which this deployment does not run.</p>
+          <p class="api-keys-desc">This stack uses <em>operator</em> keys instead. They are configured on the server and are not managed from the browser.</p>
+          <p class="api-keys-desc">Generate one, add it to <code>.env</code>, and restart the stack:</p>
+          <pre class="api-keys-desc"><code>WORLDMONITOR_VALID_KEYS=wm_$(openssl rand -hex 20)</code></pre>
+          <p class="api-keys-desc">Send it as the <code>X-WorldMonitor-Key</code> header. The same key authenticates the bundled MCP server at <code>/mcp</code>. Comma-separate the value to accept more than one key.</p>
+        </div>
+      </div>`;
+  }
+
   private renderApiKeysContent(): string {
     const authState = getAuthState();
+
+    // Auth-disabled build: there is no account to sign into and no Convex to
+    // hold a per-user key, so both walls below are dead ends and the create
+    // form underneath them would fail on the first mutation. Self-hosted keys
+    // are real, they are just operator-configured — say where they come from
+    // instead of asking for a sign-in that cannot happen.
+    if (isAuthDisabled()) return this.renderSelfHostedApiKeysContent();
 
     if (!authState.user) {
       const lockIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>`;

@@ -1,3 +1,4 @@
+import { AUTH_DISABLED_UNAVAILABLE_DETAIL, isAuthDisabled } from '@/config/auth-mode';
 import { type AuthSession, getAuthState, subscribeAuthState } from '@/services/auth-state';
 import {
   getEntitlementVerificationStatus,
@@ -292,6 +293,24 @@ export class ResilienceWidget {
   }
 
   private renderLocked(gateReason: PanelGateReason): HTMLElement {
+    // Auth-disabled build: UNAVAILABLE, and neither CTA below leads anywhere.
+    // Keep the locked preview — it is what the widget looks like with data —
+    // but state the reason plainly and offer no action.
+    if (isAuthDisabled()) {
+      const preview = this.renderScoreCard(LOCKED_PREVIEW, true);
+      preview.classList.add('resilience-widget__preview');
+      return h(
+        'div',
+        { className: 'cdp-card-body resilience-widget__locked' },
+        preview,
+        h(
+          'div',
+          { className: 'panel-locked-desc resilience-widget__gate-desc' },
+          AUTH_DISABLED_UNAVAILABLE_DETAIL,
+        ),
+      );
+    }
+
     const description = gateReason === PanelGateReason.ANONYMOUS
       ? 'Sign in to unlock premium resilience scores.'
       : 'Upgrade to Pro to unlock resilience scores.';
