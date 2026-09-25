@@ -25,11 +25,14 @@ import type { Clerk } from '@clerk/clerk-js';
 import { enqueueSentryCall } from '@/bootstrap/sentry-defer';
 import { EULA_PATH, PRIVACY_PATH, absoluteLegalUrl } from '../../shared/legal';
 import { WEB_APP_ORIGIN } from '@/config/web-origin';
+import { isAuthDisabled } from '@/config/auth-mode';
 
 type ClerkInstance = Clerk;
 type ClerkSession = NonNullable<ClerkInstance['session']>;
 
 function readPublishableKey(): string | undefined {
+  // VITE_DISABLE_AUTH builds never load Clerk, even when a key is configured.
+  if (isAuthDisabled()) return undefined;
   try {
     return import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
   } catch {

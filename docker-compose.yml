@@ -16,6 +16,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_DISABLE_AUTH: "${VITE_DISABLE_AUTH:-false}"
     image: worldmonitor:latest
     container_name: worldmonitor
     ports:
@@ -23,6 +25,10 @@ services:
     environment:
       UPSTASH_REDIS_REST_URL: "http://redis-rest:80"
       UPSTASH_REDIS_REST_TOKEN: "${REDIS_TOKEN:?REDIS_TOKEN required — generate with: openssl rand -hex 32}"
+      # Run the credential-free seeders in-container so this stack fills its own
+      # Redis from free public APIs instead of rendering every panel empty.
+      # Leave unset if something else already writes to this Redis.
+      WM_SELF_HOST_SEEDING: "${WM_SELF_HOST_SEEDING:-true}"
       WM_SESSION_SECRET: "${WM_SESSION_SECRET:?WM_SESSION_SECRET required — generate with: openssl rand -hex 32}"
       LOCAL_API_PORT: "46123"
       LOCAL_API_MODE: "docker"

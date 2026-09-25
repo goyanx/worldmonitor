@@ -19,6 +19,7 @@
  * displays + links to it.
  */
 
+import { AUTH_DISABLED_UNAVAILABLE_COPY, AUTH_DISABLED_UNAVAILABLE_DETAIL, isAuthDisabled } from '@/config/auth-mode';
 import { Panel } from './Panel';
 import { getClerkToken, clearClerkTokenCache } from '@/services/clerk';
 import { PanelGateReason, hasPremiumAccess, readClientEntitlementBelief } from '@/services/panel-gating';
@@ -405,6 +406,7 @@ export class LatestBriefPanel extends Panel {
    * this is an error state.
    */
   private renderSignInRequired(): void {
+    if (isAuthDisabled()) { this.renderNotImplemented(); return; }
     const logo = h('div', { className: 'latest-brief-logo' });
     logo.appendChild(rawHtml(WM_LOGO_SVG));
     this.setContentNodes(
@@ -426,6 +428,7 @@ export class LatestBriefPanel extends Panel {
    * contradicts does NOT land here; see classifyPremiumDenial (#5608).
    */
   private renderUpgradeRequired(): void {
+    if (isAuthDisabled()) { this.renderNotImplemented(); return; }
     const logo = h('div', { className: 'latest-brief-logo' });
     logo.appendChild(rawHtml(WM_LOGO_SVG));
     this.setContentNodes(
@@ -435,6 +438,23 @@ export class LatestBriefPanel extends Panel {
         h('div', { className: 'latest-brief-empty-body' },
           'The WorldMonitor Brief is included with the Pro plan. Upgrade to unlock today\u2019s issue.',
         ),
+      ),
+    );
+  }
+
+  /**
+   * Auth-disabled build: the brief is user-scoped and there is no account to
+   * scope it to. Terminal and deliberately not an upsell — the feature is not
+   * wired up in this deployment, which is a different claim from "unaffordable".
+   */
+  private renderNotImplemented(): void {
+    const logo = h('div', { className: 'latest-brief-logo' });
+    logo.appendChild(rawHtml(WM_LOGO_SVG));
+    this.setContentNodes(
+      h('div', { className: 'latest-brief-card latest-brief-card--composing' },
+        logo,
+        h('div', { className: 'latest-brief-empty-title' }, AUTH_DISABLED_UNAVAILABLE_COPY),
+        h('div', { className: 'latest-brief-empty-body' }, AUTH_DISABLED_UNAVAILABLE_DETAIL),
       ),
     );
   }

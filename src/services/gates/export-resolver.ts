@@ -19,6 +19,7 @@
  * services and the app layer import it.
  */
 
+import { isAuthDisabled } from '@/config/auth-mode';
 import { getBillingGateOverride, type BillingUxState } from '../billing-state';
 
 /** Formats the dashboard can genuinely produce. Keep this list aligned with
@@ -112,6 +113,9 @@ export type ExportGateVerdict =
  *      stale paid evidence sees "update payment" instead of an upsell.
  */
 export function resolveExportLock(input: ExportGateInputs): ExportGateLockReason | null {
+  // Export runs entirely in the browser over data the page already holds, so
+  // an auth-disabled build has no reason (and no upgrade path) to withhold it.
+  if (isAuthDisabled()) return null;
   if (input.desktopKeyPresent) return null;
   if (input.authPending) return null;
   if (!input.signedIn) return 'anonymous';
@@ -148,6 +152,7 @@ export function resolveExportGate(input: ExportGateInputs): ExportGateVerdict {
  * because it distinguishes Pro Business from Pro even though both are tier 1.
  */
 export function resolveAvailableExportFormats(input: ExportGateInputs): DataExportFormat[] {
+  if (isAuthDisabled()) return allExportFormats();
   if (!input.gateActive || input.desktopKeyPresent || input.authPending) {
     return allExportFormats();
   }
@@ -220,6 +225,8 @@ function decideTabCap(
  *      a customer with stale paid evidence sees "update payment", not an upsell
  */
 export function resolveTabCap(input: ExportGateInputs, currentTabCount: number): TabCapVerdict {
+  // No account means no plan allowance to enforce; dashboards are local state.
+  if (isAuthDisabled()) return UNCAPPED;
   if (input.desktopKeyPresent) return UNCAPPED;
   if (input.authPending) return UNCAPPED;
   if (!input.signedIn) return decideTabCap(input, currentTabCount, FREE_TAB_CAP, 'anonymous');

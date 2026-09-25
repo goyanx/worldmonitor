@@ -1,3 +1,4 @@
+import { isAuthDisabled } from '@/config/auth-mode';
 import { CANONICAL_FEEDS, INTEL_SOURCES, SOURCE_REGION_MAP } from '@/config/feeds';
 import { WEB_APP_ORIGIN } from '@/config/web-origin';
 import { openExternalUrl } from '@/services/external-navigation';
@@ -1081,6 +1082,9 @@ export class UnifiedSettings {
   // the entitlement snapshot arrives and, for an entitled owner, while the
   // subscription watch is still settling (#6772).
   private renderPlanCheckingState(): string {
+    // Nothing is resolving in an auth-disabled build — the spinner would never
+    // be replaced by a real plan.
+    if (isAuthDisabled()) return '';
     return `
         <div class="upgrade-pro-section upgrade-pro-loading" role="status" aria-live="polite">
           <div class="upgrade-pro-title">Checking your plan…</div>
@@ -1090,6 +1094,11 @@ export class UnifiedSettings {
   }
 
   private renderUpgradeSection(): string {
+    // Auth-disabled build: there is no account, no plan and no billing
+    // provider, so every branch below would render a control that cannot do
+    // anything. Collapse the whole section instead.
+    if (isAuthDisabled()) return '';
+
     // Non-Dodo premium (API key / tester key / Clerk pro role without a
     // Convex subscription): neither "Upgrade" nor "Manage Billing" is
     // actionable. Still explain the account state here; a hidden billing

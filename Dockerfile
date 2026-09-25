@@ -45,6 +45,10 @@ RUN npm run build:pro
 
 # Build the Vite frontend (outputs to dist/)
 # Skip blog build — blog-site has its own deps not installed here
+# VITE_DISABLE_AUTH=true builds a dashboard with no sign-in and no premium
+# upsells (see src/config/auth-mode.ts). Server-side key checks are unchanged.
+ARG VITE_DISABLE_AUTH=false
+ENV VITE_DISABLE_AUTH=$VITE_DISABLE_AUTH
 RUN npx tsc && npx vite build
 # Assert the /pro pages survived the public/ -> dist/ copy (#6898). build:pro
 # succeeding proves public/pro/ exists; it does NOT prove Vite copied it, and
@@ -94,6 +98,14 @@ COPY --from=builder /app/api ./api
 
 # Static data files used by handlers at runtime
 COPY --from=builder /app/data ./data
+
+# Self-hosted ingestion. Railway runs these as ~33 separate cron services; a
+# self-hosted stack has no such tier, so without them Redis stays empty and
+# every panel reports no data. Only the credential-free seeders are eligible
+# (see scripts/self-host-seed-runner.mjs); the runner itself is opt-in through
+# WM_SELF_HOST_SEEDING.
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/shared ./shared
 
 # Built frontend static files
 COPY --from=builder /app/dist /usr/share/nginx/html

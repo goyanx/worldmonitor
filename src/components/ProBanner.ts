@@ -1,3 +1,4 @@
+import { isAuthDisabled } from '@/config/auth-mode';
 import { trackGateHit } from '@/services/analytics';
 import { onEntitlementChange, getEntitlementState, isEntitlementActive } from '@/services/entitlements';
 import { getSubscription, onSubscriptionChange } from '@/services/billing';
@@ -208,6 +209,10 @@ function resolveEffectiveBannerPremium(): EffectiveBannerPremium {
 }
 
 export function showProBanner(container: HTMLElement): void {
+  // Nothing to upsell in an auth-disabled build. Return before caching the
+  // container so the entitlement listener has no mount point to re-open with.
+  if (isAuthDisabled()) return;
+
   // Cache container even on early-return paths so the entitlement-change
   // listener can re-mount on a downgrade. App.ts calls this once at init
   // regardless of premium state, so caching here covers both "initially

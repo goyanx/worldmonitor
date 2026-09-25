@@ -36,6 +36,15 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  // This suite asserts the DEFAULT product: sign-in controls, upgrade CTAs and
+  // the free-tier caps. `VITE_DISABLE_AUTH=true` deliberately removes all of
+  // them, and Vite would otherwise pick that flag up from a self-hoster's local
+  // `.env` — turning a correctly-configured machine into ~26 red tests that say
+  // nothing about the code. Pin it off; the auth-disabled path has its own
+  // coverage in tests/dom/auth-disabled-gating.test.mts.
+  define: {
+    'import.meta.env.VITE_DISABLE_AUTH': JSON.stringify('false'),
+  },
   test: {
     environment: 'happy-dom',
     // Local pre-push exports this cap so several worktrees cannot each fan out

@@ -1,4 +1,5 @@
 import { subscribeAuthState, type AuthSession } from '@/services/auth-state';
+import { isAuthDisabled } from '@/config/auth-mode';
 import { mountUserButton, openSignIn, openSignUp } from '@/services/clerk';
 import { t } from '@/services/i18n';
 import { setTrustedHtml, trustedHtml } from '@/utils/dom-utils';
@@ -21,6 +22,14 @@ export class AuthHeaderWidget {
     this.onBillingClick = onBillingClick;
     this.container = document.createElement('div');
     this.container.className = 'auth-header-widget';
+
+    // Auth-disabled builds have no account to sign into. Leave the container
+    // empty and never subscribe: the pending skeleton would otherwise flash
+    // two placeholder pills that resolve into nothing.
+    if (isAuthDisabled()) {
+      this.container.hidden = true;
+      return;
+    }
 
     this.unsubscribeAuth = subscribeAuthState((state: AuthSession) => {
       if (state.isPending) {

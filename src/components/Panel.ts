@@ -10,6 +10,11 @@ import { PanelGateReason } from '@/services/panel-gating';
 import { lockSvg, upgradeSvg } from '@/components/gate-icons';
 import { createCheckoutConsentElement } from '@/utils/legal-links';
 import { WEB_APP_ORIGIN } from '@/config/web-origin';
+import {
+  AUTH_DISABLED_UNAVAILABLE_COPY,
+  AUTH_DISABLED_UNAVAILABLE_DETAIL,
+  isAuthDisabled,
+} from '@/config/auth-mode';
 import { dataFreshness, type PanelFreshnessSummary } from '@/services/data-freshness';
 import { formatPanelFreshnessDisplay } from '@/services/panel-freshness-display';
 import {
@@ -1124,6 +1129,16 @@ export class Panel {
     const iconEl = h('div', { className: 'panel-locked-icon' });
     setTrustedHtml(iconEl, trustedHtml(lockSvg, 'legacy direct innerHTML migration'));
 
+    // Auth-disabled builds have nothing to sell: say the data is unavailable
+    // and stop before the feature list and the checkout CTA.
+    if (isAuthDisabled()) {
+      this.replaceContent(h('div', { className: 'panel-locked-state' },
+        iconEl,
+        h('div', { className: 'panel-locked-desc' }, AUTH_DISABLED_UNAVAILABLE_DETAIL),
+      ));
+      return;
+    }
+
     const lockedChildren: (HTMLElement | string)[] = [
       iconEl,
       h('div', { className: 'panel-locked-desc' }, t('premium.lockedDesc')),
@@ -1165,8 +1180,14 @@ export class Panel {
    */
   private static gatedCtaEntry(
     reason: PanelGateReason,
-  ): { icon: string; desc: string; cta: string } | null {
+  ): { icon: string; desc: string; cta: string | null } | null {
     switch (reason) {
+      case PanelGateReason.UNAVAILABLE:
+        return {
+          icon: lockSvg,
+          desc: AUTH_DISABLED_UNAVAILABLE_COPY,
+          cta: null,
+        };
       case PanelGateReason.ANONYMOUS:
         return {
           icon: lockSvg,
@@ -1236,6 +1257,13 @@ export class Panel {
     setTrustedHtml(iconEl, trustedHtml(entry.icon, 'legacy direct innerHTML migration'));
 
     const descEl = h('div', { className: 'panel-locked-desc' }, entry.desc);
+
+    // A null CTA (auth-disabled builds) has no action to offer. Render the
+    // reason alone rather than an empty button still wired to onAction.
+    if (entry.cta === null) {
+      this.replaceContent(h('div', { className: 'panel-locked-state' }, iconEl, descEl));
+      return;
+    }
 
     const ctaBtn = h('button', { type: 'button', className: 'panel-locked-cta' }, entry.cta);
     ctaBtn.addEventListener('click', onAction);

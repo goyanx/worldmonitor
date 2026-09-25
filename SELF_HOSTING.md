@@ -99,9 +99,34 @@ could then supply a false forwarded address and evade the per-IP quota.
 
 > Need to bring the relay up without auth for local debugging? Set `I_UNDERSTAND_THIS_DISABLES_AUTH=true` (the deprecated `ALLOW_UNAUTHENTICATED_RELAY=true` is still accepted). The relay will log a loud `[SECURITY]` warning at boot and every 5 minutes, and every non-public route will be reachable by anyone who can hit the port — **never use this on an internet-reachable host.**
 
+## Building without sign-in or Pro upsells
+
+A self-hosted stack has no Clerk, Convex or Dodo backend, so the browser's Sign In,
+Create Account and Upgrade to Pro controls lead nowhere. Build with
+`VITE_DISABLE_AUTH=true` to remove them:
+
+```bash
+VITE_DISABLE_AUTH=true docker compose up -d --build
+```
+
+With the flag on:
+
+- Clerk never loads, and the header sign-in / create-account controls are not rendered.
+- The Pro banner, the settings upgrade section and every panel upsell CTA are gone.
+- A premium panel with no data renders **`NOT IMPLEMENTED`** with no call to action,
+  rather than an upgrade prompt for a plan that cannot be bought here.
+- Purely client-side Pro limits are lifted: data export, the dashboard tab cap.
+- The header version reads `v<version>-selfhost` so a build is identifiable at a glance.
+
+This is a **client build flag only**. The server is unchanged: `/api/mcp` and every
+premium route still authenticate `X-WorldMonitor-Key` against
+`WORLDMONITOR_VALID_KEYS`. Setting it does not expose anything that was protected.
+
 ## 🤖 Using the MCP server
 
-The bundled MCP server is served at `/api/mcp` on your own stack. It authenticates
+The bundled MCP server is served at `/api/mcp` on your own stack, and at `/mcp`,
+which is the path `server.json` and `mcp.json` advertise — point agent clients at
+`http://localhost:3000/mcp`. It authenticates
 with the `X-WorldMonitor-Key` header, validated against `WORLDMONITOR_VALID_KEYS`
 (the OAuth path is hosted-only). Generate a key, put it in `.env`, and restart:
 
@@ -112,7 +137,7 @@ docker compose up -d
 ```
 
 ```bash
-curl -s -X POST http://localhost:3000/api/mcp \
+curl -s -X POST http://localhost:3000/mcp \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
   -H "X-WorldMonitor-Key: $YOUR_KEY" \
@@ -186,7 +211,51 @@ services:
 
 ## 🌱 Seeding Data
 
-The seed scripts fetch upstream data and write it to Redis. They run **on the host** (not inside the container) and need the Redis REST proxy to be running.
+The dashboard reads every panel out of Redis. On the hosted deployment that Redis
+is filled by dozens of independent seed services on their own crons. A self-hosted
+stack has no such tier, so until something seeds it, Redis is empty and effectively
+every panel reports no data.
+
+There are two ways to fill it.
+
+### In-container automatic seeding (default)
+
+`scripts/self-host-seed-runner.mjs` runs inside the app container under supervisord
+and keeps Redis filled without any host-side cron. It reads
+`scripts/railway-services.json` — the same registry the hosted deployment uses — and
+runs **only the seeders that need no vendor credentials**. Those pull from free
+public APIs (USGS, GDELT, ECB, Eurostat, IMF, World Bank, Ember and similar), so a
+self-hosted stack is its own data source: no paid subscription and no upstream
+WorldMonitor account.
+
+Each seeder keeps the cadence declared in the registry (`*/5 * * * *` for
+earthquakes, hourly for security advisories, and so on); entries with no declared
+cron default to every 6 hours. A cold container runs one immediate pass so a fresh
+Redis fills within minutes rather than waiting out each schedule.
+
+Controlled by `WM_SELF_HOST_SEEDING` (defaults to `true` in `docker-compose.yml`):
+
+```bash
+# Disable if something else already writes to this Redis — two writers would
+# race on the same keys.
+WM_SELF_HOST_SEEDING=false docker compose up -d
+```
+
+Seeders that DO need a credential are skipped, and the runner logs which one is
+missing at startup:
+
+```bash
+docker compose logs worldmonitor | grep self-host-seed
+```
+
+Add the relevant key to `.env` (see [API Keys](#-api-keys)) and restart to promote a
+skipped seeder into the running set. Panels whose feed has no seeder running render
+a `NOT IMPLEMENTED` state rather than an upsell.
+
+### Host-side manual seeding
+
+The seed scripts can also be run **on the host**, which is the simpler path when
+iterating on a single seeder. This needs the Redis REST proxy to be running.
 
 ```bash
 # Run all seeders (auto-sources API keys from docker-compose.override.yml)

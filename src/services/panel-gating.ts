@@ -12,6 +12,7 @@
  * none of them, so the dependency runs one way.
  */
 
+import { isAuthDisabled } from '@/config/auth-mode';
 import { WEB_APP_ORIGIN } from '@/config/web-origin';
 import type { AuthSession } from './auth-state';
 import { getSubscription, openBillingPortal, prereserveBillingPortalTab } from './billing';
@@ -32,6 +33,9 @@ export enum PanelGateReason {
   RENEWAL_PENDING = 'renewal_pending', // "Refresh Status" (renewal verification in progress)
   RENEWAL_FAILED = 'renewal_failed',   // "Manage Billing" (provider check failed)
   LAPSED = 'lapsed',                   // "Resubscribe" (provider confirmed coverage ended)
+  // VITE_DISABLE_AUTH builds: no account to sign in to or upgrade, so a
+  // premium panel without an operator key renders "Data unavailable" with no CTA.
+  UNAVAILABLE = 'unavailable',
 }
 
 /**
@@ -112,6 +116,8 @@ export function getPanelGateReason(
 
   // API key, tester key, or Clerk Pro: always unlocked
   if (hasPremiumAccess(authState)) return PanelGateReason.NONE;
+
+  if (isAuthDisabled()) return PanelGateReason.UNAVAILABLE;
 
   // Web gating based on Clerk auth state
   if (!authState.user) return PanelGateReason.ANONYMOUS;
