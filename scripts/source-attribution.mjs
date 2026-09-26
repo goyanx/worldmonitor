@@ -309,6 +309,8 @@ const PROVIDER_OVERRIDES = {
   'madamasr.com': publisherMetadataFeed('Mada Masr'),
   'thedailystar.net': publisherMetadataFeed('The Daily Star'),
   'dhakatribune.com': publisherMetadataFeed('Dhaka Tribune'),
+  'data.gmanetwork.com': publisherMetadataFeed('GMA News'),
+  'news.abs-cbn.com': publisherMetadataFeed('ABS-CBN News'),
   'nation.africa': publisherMetadataFeed('Daily Nation'),
   'theguardianpostcameroon.com': publisherMetadataFeed('The Guardian Post'),
   'tchadinfos.com': publisherMetadataFeed('Tchadinfos'),
@@ -952,13 +954,13 @@ const PROVIDER_OVERRIDES = {
 // a provider-bearing override a separate, explicit lifecycle event instead of
 // something `--write` can silently normalize into the manifest.
 export const PROVIDER_IDENTITY_REVIEW = Object.freeze({
-  sha256: 'd58673bf0ffb24d710c66510e833bca13df9fc4c98bfb2839606506dd0f95317',
-  reason: 'Preserve reviewed provider identities, register the two official NASA FIRMS Area API hosts as one provider identity, name TradingView as the provider behind the S&P 500 breadth screener scan that replaced the WAF-blocked Barchart quote pages, exclude the Sentry error-tracking host that the resolve-pin audit reads, and group the JODI publication catalog with its existing data host.',
+  sha256: '8bed90c299ec50ee8ba231a91bb4e19b3d190d048f51538e4dab4a713332122d',
+  reason: 'Preserve reviewed provider identities, register the two official NASA FIRMS Area API hosts as one provider identity, name TradingView as the provider behind the S&P 500 breadth screener scan that replaced the WAF-blocked Barchart quote pages, exclude the Sentry error-tracking host that the resolve-pin audit reads, group the JODI publication catalog with its existing data host, and register GMA News (data.gmanetwork.com, native RSS) and ABS-CBN News (news.abs-cbn.com, via Google News) as Philippine headline-ingest feed publishers.',
   // A URL cited here is scanned like any other: this file sits inside
   // SOURCE_ROOTS, so citing a host that is not already a registered source
   // invents a provider row for it. The B.C. catalogue URLs above are safe
   // because that host is itself an observed source; parallel.ai is not.
-  reviewReference: 'Issue #6449 BGS provenance review; plus Issue #7371 country corpus identity review; plus Issue #7005 IMD cyclone/marine source-rights probe; plus Issues #7012, #7036, and #6682 Toronto safety sources; plus PR #7576 source migration review; plus Issue #7000 publisher-centric source catalog; plus Issue #7001, Issue #6437, Issue #6622, Issue #6659, PR #6447, the 2026-09-01 FAOSTAT transport identity review, the 2026-09-04 FIRMS partial-coverage incident, and the 2026-09-05 Barchart WAF outage that moved S&P 500 breadth to the TradingView screener scan; plus Issue #7838, which added the read-only Sentry resolve-pin audit; plus PR #8394 JODI publication catalog lineage.',
+  reviewReference: 'Issue #6449 BGS provenance review; plus Issue #7371 country corpus identity review; plus Issue #7005 IMD cyclone/marine source-rights probe; plus Issues #7012, #7036, and #6682 Toronto safety sources; plus PR #7576 source migration review; plus Issue #7000 publisher-centric source catalog; plus Issue #7001, Issue #6437, Issue #6622, Issue #6659, PR #6447, the 2026-09-01 FAOSTAT transport identity review, the 2026-09-04 FIRMS partial-coverage incident, and the 2026-09-05 Barchart WAF outage that moved S&P 500 breadth to the TradingView screener scan; plus Issue #7838, which added the read-only Sentry resolve-pin audit; plus PR #8394 JODI publication catalog lineage; plus the 2026-09-26 Philippine news source addition registering GMA News and ABS-CBN News.',
 });
 
 export function providerIdentityDigest(providerOverrides = PROVIDER_OVERRIDES) {

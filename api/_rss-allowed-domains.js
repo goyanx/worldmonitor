@@ -40,6 +40,7 @@ export default [
   "correctiv.org",
   "cryptoslate.com",
   "dailytrust.com",
+  "data.gmanetwork.com",
   "de.euronews.com",
   "de.usembassy.gov",
   "decrypt.co",

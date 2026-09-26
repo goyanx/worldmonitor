@@ -516,6 +516,8 @@ const HOST_ORIGINS = Object.freeze({
   'www.rand.org': 'US',
   'www.ransomware.live': 'FR',
   'www.rappler.com': 'PH',
+  'data.gmanetwork.com': 'PH',
+  'news.abs-cbn.com': 'PH',
   'www.reddit.com': 'US',
   'www.replicatestatus.com': 'US',
   'www.rigzone.com': 'US',
