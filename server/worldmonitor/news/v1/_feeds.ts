@@ -364,12 +364,24 @@ export const VARIANT_FEEDS: Record<string, Record<string, ServerFeed[]>> = {
       { name: 'Guardian Pacific', url: 'https://www.theguardian.com/world/pacific-islands/rss' },
       { name: 'France 24 Asia Pacific', url: 'https://www.france24.com/en/asia-pacific/rss' },
       { name: 'The Diplomat', url: 'https://thediplomat.com/feed/' },
+      // South China Sea / Philippine desk — mirror of the client catalog (see the
+      // asia tail there). Declared early on purpose: the digest only completes
+      // roughly the first dozen asia feeds before its fetch deadline, and these
+      // feed the South China Sea map hotspots. The topic query is the cross-outlet
+      // catch-all for Chinese vessel movements; USNI News is already carried in
+      // the defense pack. ABS-CBN has no working public RSS (403) so it rides
+      // Google News (PH edition).
+      { name: 'South China Sea Watch', url: gn('("South China Sea" OR "West Philippine Sea") ("China Coast Guard" OR "PLA Navy" OR "maritime militia" OR warship OR vessel) when:2d'), lang: 'en' },
+      { name: 'GMA News', url: 'https://data.gmanetwork.com/gno/rss/news/feed.xml', lang: 'en' },
+      { name: 'AMTI (CSIS)', url: 'https://amti.csis.org/feed/', lang: 'en' },
       // Theater coverage preset (#5956) - Indo-Pacific sources.
       { name: 'Reuters Asia', url: gn('site:reuters.com (China OR Japan OR Taiwan OR Korea) when:3d') },
       { name: 'Reuters India', url: gn('site:reuters.com India when:3d') },
       { name: 'Japan Today', url: 'https://japantoday.com/feed/atom' },
       { name: 'Nikkei Asia', url: gn('site:asia.nikkei.com when:3d') },
       { name: 'CNA', url: 'https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml' },
+      { name: 'Naval News', url: 'https://www.navalnews.com/feed/', lang: 'en' },
+      { name: 'ABS-CBN News', url: gnLocale('site:news.abs-cbn.com when:3d', 'en-PH', 'PH', 'PH:en'), lang: 'en' },
       { name: 'NDTV', url: 'https://feeds.feedburner.com/ndtvnews-top-stories' },
       { name: 'South China Morning Post', url: gn('site:scmp.com when:2d') },
       { name: 'The Hindu', url: 'https://www.thehindu.com/feeder/default.rss' },
@@ -412,18 +424,6 @@ export const VARIANT_FEEDS: Record<string, Record<string, ServerFeed[]>> = {
       { name: 'The Daily Star', url: gn('site:thedailystar.net when:14d') },
       { name: 'Dhaka Tribune', url: gn('site:dhakatribune.com when:14d') },
       { name: 'Times of India', url: 'https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms', lang: 'en' },
-      // Philippines — mirror of the client catalog entries. GMA native RSS;
-      // ABS-CBN has no working public RSS (403) so it rides Google News (PH
-      // edition) like the other GNews-only desks.
-      { name: 'GMA News', url: 'https://data.gmanetwork.com/gno/rss/news/feed.xml', lang: 'en' },
-      { name: 'ABS-CBN News', url: gnLocale('site:news.abs-cbn.com when:3d', 'en-PH', 'PH', 'PH:en'), lang: 'en' },
-      // South China Sea / West Philippine Sea maritime-security desk — mirror
-      // of the client catalog. AMTI + Naval News native RSS; the topic query is
-      // the cross-outlet catch-all for Chinese vessel movements. USNI News is
-      // already carried in the defense pack, so it is not repeated here.
-      { name: 'AMTI (CSIS)', url: 'https://amti.csis.org/feed/', lang: 'en' },
-      { name: 'Naval News', url: 'https://www.navalnews.com/feed/', lang: 'en' },
-      { name: 'South China Sea Watch', url: gn('("South China Sea" OR "West Philippine Sea") ("China Coast Guard" OR "PLA Navy" OR "maritime militia" OR warship OR vessel) when:2d'), lang: 'en' },
     ],
     energy: [
       { name: 'Oil & Gas', url: gn('(oil price OR OPEC OR "natural gas" OR pipeline OR LNG) when:2d') },
