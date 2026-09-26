@@ -373,8 +373,8 @@ describe('military proximity counting', () => {
 });
 
 describe('shared curated geo datasets', () => {
-  it('publishes the 29 curated intel hotspots with unique ids and valid coordinates', () => {
-    assert.equal(INTEL_HOTSPOTS.length, 29);
+  it('publishes the 37 curated intel hotspots with unique ids and valid coordinates', () => {
+    assert.equal(INTEL_HOTSPOTS.length, 37);
     const ids = INTEL_HOTSPOTS.map((h) => h.id);
     assert.equal(new Set(ids).size, ids.length, 'hotspot ids must be unique');
     for (const hotspot of INTEL_HOTSPOTS) {

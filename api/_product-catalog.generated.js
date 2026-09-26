@@ -181,7 +181,7 @@ export const PUBLIC_PRODUCT_FACTS = {
     "submarineCables": 86,
     "pipelinesLng": 159,
     "aiDatacenters": 313,
-    "hotspots": 29,
+    "hotspots": 37,
     "stockExchanges": 29,
     "mcpTools": 75,
     "commands": 619,

@@ -942,7 +942,7 @@ export const ANALYSIS_TOOLS: ToolDef[] = [
     name: 'get_hotspot_escalation',
     _outputBudgetBytes: 65536,
     description:
-      'Hotspot escalation scores: the 29 curated intelligence hotspots ranked by dynamic escalation on a 1-5 scale. ' +
+      'Hotspot escalation scores: the 37 curated intelligence hotspots ranked by dynamic escalation on a 1-5 scale. ' +
       'Runs a reduced server snapshot of the dashboard escalation engine: for each curated hotspot, news pressure (keyword matches over the ' +
       'seeded story clusters), country instability, geographic signal convergence (protests, military flights, earthquakes ' +
       'gridded around the hotspot), and nearby military activity are normalized to 0-100 components, weighted 35/25/25/15, ' +
@@ -953,7 +953,7 @@ export const ANALYSIS_TOOLS: ToolDef[] = [
       type: 'object',
       properties: {
         hotspot_id: { type: 'string', description: 'Return only this curated hotspot id (see any full response for the id list).' },
-        limit: { type: 'number', description: 'Cap the ranked hotspot list (default 29, the full curated set; pass 0 for no cap).' },
+        limit: { type: 'number', description: 'Cap the ranked hotspot list (default 37, the full curated set; pass 0 for no cap).' },
       },
       required: [],
     },

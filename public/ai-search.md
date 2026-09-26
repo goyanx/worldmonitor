@@ -70,7 +70,7 @@ Coverage reconciled: 2026-09-26. Every figure below is generated from this repos
 - 86 submarine cable routes
 - 159 pipelines and LNG assets
 - 313 AI datacenters mapped
-- 29 scored geopolitical hotspots
+- 37 scored geopolitical hotspots
 - 29 stock exchanges in the markets registry
 <!-- /generated:ai-search-coverage -->
 
