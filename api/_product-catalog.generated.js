@@ -166,14 +166,14 @@ export const PUBLIC_PRODUCT_FACTS = {
   ],
   "heroProofStats": {
     "mapLayers": 57,
-    "feeds": 461,
-    "providers": 757,
+    "feeds": 465,
+    "providers": 761,
     "alertOrigins": 5
   },
   "depthProofStats": {
     "mapLayers": 57,
-    "feeds": 461,
-    "providers": 757,
+    "feeds": 465,
+    "providers": 761,
     "alertOrigins": 5,
     "chokepoints": 13,
     "instabilityCountries": 31,
@@ -181,7 +181,7 @@ export const PUBLIC_PRODUCT_FACTS = {
     "submarineCables": 86,
     "pipelinesLng": 159,
     "aiDatacenters": 313,
-    "hotspots": 29,
+    "hotspots": 37,
     "stockExchanges": 29,
     "mcpTools": 75,
     "commands": 619,

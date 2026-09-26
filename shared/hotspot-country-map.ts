@@ -37,6 +37,14 @@ export const HOTSPOT_COUNTRY_MAP: Readonly<Record<string, string | readonly stri
   wall_street: 'US',
   houston: 'US',
   cairo: 'EG',
+  west_philippine_sea: ['PH', 'CN'],
+  scarborough_shoal: ['PH', 'CN'],
+  second_thomas_shoal: ['PH', 'CN'],
+  sabina_shoal: ['PH', 'CN'],
+  spratly_islands: ['PH', 'CN', 'VN'],
+  pagasa_island: ['PH', 'CN'],
+  reed_bank: ['PH', 'CN'],
+  paracel_islands: ['CN', 'VN'],
 };
 
 export function getHotspotCountries(hotspotId: string): string[] {

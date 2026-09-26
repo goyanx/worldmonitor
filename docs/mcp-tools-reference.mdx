@@ -1673,14 +1673,14 @@ curl -s https://worldmonitor.app/mcp \
 
 ### `get_hotspot_escalation`
 
-Hotspot escalation scores: the 29 curated intelligence hotspots ranked on the documented 1-5 composite scale. News pressure, country instability, geographic signal convergence, and nearby military activity are normalized to 0-100 components, weighted 35/25/25/15, and blended 30/70 with each hotspot's curated static baseline — the same math the dashboard map publishes.
+Hotspot escalation scores: the 37 curated intelligence hotspots ranked on the documented 1-5 composite scale. News pressure, country instability, geographic signal convergence, and nearby military activity are normalized to 0-100 components, weighted 35/25/25/15, and blended 30/70 with each hotspot's curated static baseline — the same math the dashboard map publishes.
 
 **Parameters (tool-specific):**
 
 | Name | Type | Description |
 |------|------|-------------|
 | `hotspot_id` | string | Return only this curated hotspot id (see any full response for the id list). |
-| `limit` | number | Cap the ranked hotspot list (default 29, the full curated set; pass 0 for no cap). |
+| `limit` | number | Cap the ranked hotspot list (default 37, the full curated set; pass 0 for no cap). |
 
 - **API endpoints:** none (MCP-only derived analysis).
 - **Access:** `subscription` — requires a Pro subscription. RPC tool: no `summary` argument (use `jmespath` to trim the response).
