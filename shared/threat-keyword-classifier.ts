@@ -158,6 +158,14 @@ const MEDIUM_KEYWORDS: KeywordMap = {
   'naval exercise': 'military',
   'arms deal': 'military',
   'weapons sale': 'military',
+  // Maritime grey-zone incidents (South China Sea coast-guard/militia
+  // confrontations) otherwise read as info: none of them say "attack".
+  'water cannon': 'military',
+  'maritime militia': 'military',
+  'resupply mission': 'military',
+  'dangerous manoeuvre': 'military',
+  'dangerous maneuver': 'military',
+  'warship': 'military',
   'diplomatic crisis': 'diplomatic',
   'ambassador recalled': 'diplomatic',
   'expel diplomats': 'diplomatic',
