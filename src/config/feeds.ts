@@ -569,6 +569,15 @@ export const FULL_FEEDS: Record<string, Feed[]> = {
     // publisher host is deliberately NOT added.
     { name: 'GMA News', url: rss('https://data.gmanetwork.com/gno/rss/news/feed.xml'), lang: 'en' },
     { name: 'ABS-CBN News', url: rss('https://news.google.com/rss/search?q=site:news.abs-cbn.com+when:3d&hl=en-PH&gl=PH&ceid=PH:en'), lang: 'en' },
+    // South China Sea / West Philippine Sea maritime-security desk (#req):
+    // tracks Chinese naval, coast-guard and maritime-militia movements. AMTI
+    // (CSIS) is the authoritative feature-by-feature SCS tracker; Naval News
+    // carries PLA Navy fleet movements; the Google News topic query is the
+    // cross-outlet catch-all (PCG statements, SeaLight, AFP, wire pickups).
+    // USNI News is already in the catalog (defense pack), so it is not repeated.
+    { name: 'AMTI (CSIS)', url: rss('https://amti.csis.org/feed/'), lang: 'en' },
+    { name: 'Naval News', url: rss('https://www.navalnews.com/feed/'), lang: 'en' },
+    { name: 'South China Sea Watch', url: rss('https://news.google.com/rss/search?q=(%22South+China+Sea%22+OR+%22West+Philippine+Sea%22)+(%22China+Coast+Guard%22+OR+%22PLA+Navy%22+OR+%22maritime+militia%22+OR+warship+OR+vessel)+when:2d&hl=en-US&gl=US&ceid=US:en'), lang: 'en' },
   ],
   energy: [
     { name: 'Oil & Gas', url: rss('https://news.google.com/rss/search?q=(oil+price+OR+OPEC+OR+"natural+gas"+OR+pipeline+OR+LNG)+when:2d&hl=en-US&gl=US&ceid=US:en') },

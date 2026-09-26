@@ -381,6 +381,23 @@
       ]
     },
     {
+      "host": "amti.csis.org",
+      "provider": "AMTI (CSIS)",
+      "kind": "feed",
+      "observed": true,
+      "license": "Publisher-provided feed or Google News link metadata; ingest is limited to headlines, summaries, timestamps, publisher credit, and link-out",
+      "attribution": "Credit AMTI (CSIS) and link to the original publisher item.",
+      "status": "reviewed",
+      "references": [
+        {
+          "path": "server/worldmonitor/news/v1/_feeds.ts"
+        },
+        {
+          "path": "src/config/feeds.ts"
+        }
+      ]
+    },
+    {
       "host": "amu.tv",
       "provider": "Amu TV",
       "kind": "feed",
@@ -12923,6 +12940,23 @@
       "license": "Provider terms for this feed publisher; verify before redistribution",
       "attribution": "Credit www.nature.com and link to the original feed publisher.",
       "status": "terms-review",
+      "references": [
+        {
+          "path": "server/worldmonitor/news/v1/_feeds.ts"
+        },
+        {
+          "path": "src/config/feeds.ts"
+        }
+      ]
+    },
+    {
+      "host": "www.navalnews.com",
+      "provider": "Naval News",
+      "kind": "feed",
+      "observed": true,
+      "license": "Publisher-provided feed or Google News link metadata; ingest is limited to headlines, summaries, timestamps, publisher credit, and link-out",
+      "attribution": "Credit Naval News and link to the original publisher item.",
+      "status": "reviewed",
       "references": [
         {
           "path": "server/worldmonitor/news/v1/_feeds.ts"
