@@ -64,43 +64,37 @@ This stack seeds its own Redis from **free public APIs** (USGS, GDELT, ECB,
 Eurostat, IMF, World Bank, Ember). 33 credential-free seeders run in-container;
 12 more are skipped because they need a vendor key nobody has configured.
 
-So tool coverage is genuinely partial, and the gaps are *structural*, not
-transient. All 75 data tools probed with empty arguments (the 2 dashboard-control
-tools added later are covered in §5):
+Coverage is therefore partial — but **do not memorise which tools work.** It
+shifts hour to hour as seeders run and their caches lapse, so any fixed list
+here is wrong within a day (it already was: `get_world_brief` and
+`get_market_data` both flipped state within 24h of first writing this). **Read
+the response, not this section.** Four shapes tell you everything:
 
-**Returns data now (32).** `get_world_brief` `get_conflict_events`
-`get_news_intelligence` `get_natural_disasters` `get_military_posture`
-`get_economic_data` `get_sanctions_data` `get_displacement_data`
-`get_health_signals` `get_energy_intelligence` `get_climate_data`
-`get_supply_chain_data` `get_tariff_trends` `get_chokepoint_status`
-`get_positive_events` `get_research_signals` `get_forecast_predictions`
-`get_forecast_scorecard` `get_temporal_anomalies` `get_china_decision_signals`
-`get_commodity_geo` `get_focal_points` `simulate_infrastructure_cascade`
-`get_military_surge` `get_population_exposure` `get_alert_digest`
-`get_hotspot_escalation` `extract_entities` `get_news_clusters`
-`get_keyword_spikes` `get_toronto_reported_occurrences`
-`get_toronto_calls_attended`
+| Response | Meaning | What to do |
+|---|---|---|
+| `{cached_at, stale, data:{…}}` | Data present. `stale` is the write age (see §4). | Use it. |
+| `data` empty / `{}` | No seeder feeds this tool on this stack. | Treat as NOT IMPLEMENTED here. |
+| `-32003` `{unavailable_inputs:[…], retryable:true}` | A tool that is *composed* from other feeds (e.g. `get_world_brief` needs `news:insights:v1`); a dependency's cache has lapsed. | Retryable — the seeder refills on its cadence. Retry later, don't report an outage. |
+| `-32603 data fetch failed` | A live-fetch tool whose upstream needs a vendor key nobody set. | Structural NOT IMPLEMENTED — retrying never helps. |
 
-**Empty — no seeder feeds them (13).** `get_market_data` `get_country_macro`
-`get_eu_housing_cycle` `get_eu_quarterly_gov_debt` `get_eu_industrial_production`
-`get_test_site_seismicity` `get_procurement_opportunities` `get_wto_trade_flows`
-`list_five_factor_scorecards` `analyze_situation` `get_mineral_production`
-`get_signal_convergence` `get_sources`
-
-**Fail with `-32603 data fetch failed` — live-fetch tools whose upstream needs a
-key (10).** `get_aviation_status` `get_cyber_threats` `get_prediction_markets`
-`get_imd_cyclone_marine` `get_infrastructure_status` `get_radiation_data`
-`get_social_velocity` `generate_forecasts` `search_flights`
-`search_flight_prices_by_date`
-
-Treat the last two groups as **NOT IMPLEMENTED on this deployment**. Retrying
-will not help; say so rather than reporting an outage. Adding the missing key to
-`.env` and restarting is what changes it — the runner logs each skipped seeder
-with the variable it wants:
+The `-32003` and empty-data cases are self-correcting or fixable; the `-32603`
+case is not. To see what a missing key would unlock, the runner logs each
+skipped seeder with the variable it wants:
 
 ```
 docker compose logs worldmonitor | grep self-host-seed
 ```
+
+**Dated snapshot (2026-09-26, illustration only — verify live).** Roughly two
+thirds of the ~75 data tools return data: conflict, news, natural disasters,
+military posture, economic, sanctions, displacement, health, energy, climate,
+supply chain, chokepoints, forecasts, China decision signals, commodities,
+market data, NLP (extract/clusters/spikes), Toronto crime. The `-32603`
+key-gated set is aviation, cyber threats, prediction markets, IMD cyclones,
+infrastructure status, radiation, social velocity, flight search, and
+`generate_forecasts`. Composed tools like `get_world_brief` drift in and out of
+`-32003` as their input seeders cycle. Confirm any specific tool by calling it —
+the table above is the contract, this paragraph is not.
 
 ---
 
@@ -171,8 +165,11 @@ saying UI control is unreachable over HTTP are out of date.
 Two tools:
 
 - **`get_dashboard_control_status`** — is a dashboard listening, what actions
-  exist, and the **exact input schema for each one**. Takes no arguments, does
-  not consume queued commands.
+  exist, and the **exact input schema for each one**. Does not consume queued
+  commands. **Must be projected:** its full payload (~9 KB) exceeds the
+  4096-byte tool output budget, so a bare call returns `{_budget_exceeded:true}`
+  and zero data. Always pass `jmespath`, e.g.
+  `{open: dashboardOpen, actions: actions, schema: schemas.focus_country}`.
 - **`control_dashboard`** — run one action. `{action, args, wait_ms}`.
 
 ```json
@@ -181,11 +178,11 @@ Two tools:
 
 ### Do not guess argument names
 
-Call `get_dashboard_control_status` first and read `schemas`. They are published
-by the dashboard from its own handlers, so they cannot drift. This matters more
-than it sounds: building this, two out of two guesses were wrong —
-`set_map_view` takes `lat`/`lon` (not `latitude`/`longitude`) and
-`focus_country` takes `iso2` (not `country_code`).
+Project `schemas` out of `get_dashboard_control_status` first and read the one
+for your action. They are published by the dashboard from its own handlers, so
+they cannot drift. This matters more than it sounds: building this, two out of
+two guesses were wrong — `set_map_view` takes `lat`/`lon` (not
+`latitude`/`longitude`) and `focus_country` takes `iso2` (not `country_code`).
 
 ### What you can do
 
@@ -204,12 +201,28 @@ way around it.
 
 ### Reading the response
 
-| Field | Means |
-|---|---|
-| `dashboardOpen: false` | **Nothing is listening.** Queued, may never run. Do not report success. |
-| `completed: false` | You did not wait long enough. It may still run. `ok` is absent. |
-| `ok: false` + `error` | The dashboard refused it — usually a bad argument. Read `error`, fix, retry. |
-| `ok: true` | It ran. `result.message` says what changed. |
+Branch on the **top-level** `ok`, not `result.ok`. Three failure shapes look
+similar and mean different things:
+
+| Shape | Meaning | What to do |
+|---|---|---|
+| `dashboardOpen: false` (queued, `completed:false`, `warning`) | Nothing is listening. See "reload the tab" below. | Do not report success. Get a tab polling. |
+| all of `ok`/`completed`/`dashboardOpen` `null` + `error:"unknown action"` | Refused **before** enqueue — the action isn't on the allowlist. No tab was involved. | Stop. It is not a transport failure and won't come good; fix the action name or accept it's excluded. |
+| `ok:false, completed:true` + `error` | The tab **ran** it and rejected the arguments (e.g. `iso2 must be an ISO 3166-1 alpha-2 code`). | Fix the args (check the schema) and retry. |
+| `completed:false` (but `dashboardOpen:true`) | You didn't wait long enough; it may still run. `ok` absent. | Raise `wait_ms` or re-query. |
+| `ok:true` | It ran. | See below for where the payload is. |
+
+**On success, do not project `result.message` blindly.** Mutating actions put a
+human string there (`set_map_view` → `"Moved the map to global."`). The 7
+read-only actions do **not** — they put their payload directly in `result` with
+no `message`, so projecting `result.message` reports `null` and you misread a
+success as empty. Project `result` whole and narrow per action:
+
+- `get_dashboard_context` → `result` is `{variant, map, panels}`; `result.map`
+  is `{view, center, zoom, mode, timeRange, enabledLayers, …}`.
+- `list_mission_presets` → `{variant, activePresetId, presets[], count}`.
+- `get_panel_layout`, `list_map_layers`, `list_dashboard_panels`,
+  `list_dashboard_tabs`, `search_dashboard` → payload in `result`, shape per action.
 
 `wait_ms` defaults to 5000, max 15000. `0` returns immediately and tells you
 nothing about the outcome.
