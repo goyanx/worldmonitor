@@ -134,44 +134,70 @@ function selectRunnable(registry) {
   return { selected, skipped };
 }
 
+/**
+ * Forward a child stream to ours line by line, each line tagged with the
+ * seeder, so `docker compose logs` shows every seeder's full output —
+ * successful runs included — not just a truncated tail of failures.
+ */
+function forwardLines(stream, out, prefix) {
+  let pending = '';
+  stream.setEncoding('utf8');
+  stream.on('data', (chunk) => {
+    pending += chunk;
+    const lines = pending.split(/\r?\n/);
+    pending = lines.pop();
+    for (const line of lines) out.write(`${prefix} ${line}\n`);
+  });
+  stream.on('end', () => {
+    if (pending) out.write(`${prefix} ${pending}\n`);
+    pending = '';
+  });
+}
+
 function runSeeder(task) {
   return new Promise((resolveRun) => {
     const started = Date.now();
+    log(`${task.service}: start (${task.entry})`);
     const child = spawn(process.execPath, [join(REPO_ROOT, task.entry)], {
       cwd: REPO_ROOT,
       env: process.env,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 
-    let tail = '';
-    const capture = (chunk) => {
-      tail = (tail + chunk.toString()).slice(-2000);
-    };
-    child.stdout.on('data', capture);
-    child.stderr.on('data', capture);
+    forwardLines(child.stdout, process.stdout, `[seed:${task.service}]`);
+    forwardLines(child.stderr, process.stderr, `[seed:${task.service} stderr]`);
 
+    let timedOut = false;
     const timer = setTimeout(() => {
-      log(`${task.service}: TIMEOUT after ${RUN_TIMEOUT_MS / 1000}s, killing`);
+      timedOut = true;
+      log(`${task.service}: TIMEOUT after ${RUN_TIMEOUT_MS / 1000}s, killing pid ${child.pid}`);
       child.kill('SIGKILL');
     }, RUN_TIMEOUT_MS);
 
-    child.on('close', (code) => {
+    let settled = false;
+    const settle = () => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
+      resolveRun();
+    };
+
+    child.on('close', (code, signal) => {
       const secs = ((Date.now() - started) / 1000).toFixed(1);
       if (code === 0) {
         log(`${task.service}: ok (${secs}s)`);
       } else {
         // A failing upstream is normal and self-correcting — the next tick
-        // retries. Log the tail so it is diagnosable without being fatal.
-        log(`${task.service}: exit ${code} (${secs}s)\n${tail.trim()}`);
+        // retries. Its full output is already in the log above.
+        const how = signal ? `killed by ${signal}${timedOut ? ' (timeout)' : ''}` : `exit ${code}`;
+        console.error(`[self-host-seed ${new Date().toISOString()}] ${task.service}: FAILED ${how} (${secs}s) — see [seed:${task.service}] lines above`);
       }
-      resolveRun();
+      settle();
     });
 
     child.on('error', (err) => {
-      clearTimeout(timer);
-      log(`${task.service}: spawn failed — ${err.message}`);
-      resolveRun();
+      console.error(`[self-host-seed ${new Date().toISOString()}] ${task.service}: spawn failed —`, err?.stack ?? err);
+      settle();
     });
   });
 }
