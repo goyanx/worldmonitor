@@ -380,7 +380,7 @@ test.describe('server-rendered welcome page', () => {
     await expect(page.locator('#root h1')).toBeVisible();
     await expect(page.locator('#root a[href="/dashboard?utm_source=welcome&utm_content=hero"]')).toBeVisible();
     await expect(page.locator('#root footer a[href="/countries/"]')).toBeVisible();
-    await expect(page.locator('#root footer a[href="https://github.com/koala73/worldmonitor"]')).toBeVisible();
+    await expect(page.locator('#root footer a[href="https://github.com/goyanx/worldmonitor"]')).toBeVisible();
   });
 
   test('keeps the English prerender visible while its module is blocked', async ({ page }) => {
@@ -480,7 +480,7 @@ test.describe('dashboard shell without JavaScript', () => {
     await expect(page.locator('#root h1')).toContainText('you already knew');
     await expect(page.locator('#root a[href="/dashboard?utm_source=welcome&utm_content=hero"]')).toBeVisible();
     await expect(page.locator('#root footer a[href="/countries/"]')).toBeVisible();
-    await expect(page.locator('#root footer a[href="https://github.com/koala73/worldmonitor"]')).toBeVisible();
+    await expect(page.locator('#root footer a[href="https://github.com/goyanx/worldmonitor"]')).toBeVisible();
   });
 
   test('hides the JS-only shell and keeps the no-JS content scrollable', async ({ page }) => {

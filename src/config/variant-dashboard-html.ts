@@ -42,7 +42,7 @@ export function renderVariantNoscriptMainHtml(variant: VariantSeoKey, meta: Vari
             <li><a href="${CANONICAL_ORIGIN}blog/">Blog</a></li>
             <li><a href="${CANONICAL_ORIGIN}docs/documentation">Documentation</a></li>
             <li><a href="${CANONICAL_ORIGIN}pro#pricing">Pricing</a></li>
-            <li><a href="https://github.com/koala73/worldmonitor">GitHub</a></li>
+            <li><a href="https://github.com/goyanx/worldmonitor">GitHub</a></li>
           </ul>
         </nav>
       </main>`;

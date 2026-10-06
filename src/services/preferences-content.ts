@@ -47,7 +47,7 @@ import {
 import { setTrustedHtml, trustedHtml } from '@/utils/dom-utils';
 
 
-const DESKTOP_RELEASES_URL = 'https://github.com/koala73/worldmonitor/releases';
+const DESKTOP_RELEASES_URL = 'https://github.com/goyanx/worldmonitor/releases';
 
 export interface PreferencesHost {
   isDesktopApp: boolean;
