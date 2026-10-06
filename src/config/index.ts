@@ -66,6 +66,7 @@ export {
   enforceFreePanelLimit,
   countFreePanelCapUsage,
   isFreePanelCapActive,
+  isFreeSourceCapActive,
   isFreePanelCapCounted,
   restoreFreeMapPanelAccess,
   restoreProGatedPanels,

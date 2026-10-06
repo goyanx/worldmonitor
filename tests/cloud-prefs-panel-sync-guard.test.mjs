@@ -154,7 +154,7 @@ describe('cloud prefs panel sync guardrails', () => {
   it('reapplies delayed free-tier panel clamps to the mounted dashboard', () => {
     const appSrc = readSrc('src/App.ts');
     const clampStart = appSrc.indexOf('if (panelsChanged) {');
-    const clampEnd = appSrc.indexOf('this.reconcileSourceLimitForTier(false);', clampStart);
+    const clampEnd = appSrc.indexOf('this.reconcileSourceLimitForTier(', clampStart);
     assert.ok(clampStart >= 0 && clampEnd > clampStart, 'free-tier panel clamp block must exist');
     const clampBlock = appSrc.slice(clampStart, clampEnd);
 

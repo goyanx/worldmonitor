@@ -21,6 +21,7 @@ import {
   enforceFreePanelLimit,
   isFreePanelCapActive,
   isFreePanelCapCounted,
+  isFreeSourceCapActive,
   isPanelEntitled,
   userSetPanelEnabled,
 } from '@/config/panels';
@@ -2191,7 +2192,7 @@ export class EventHandlerManager implements AppModule {
       getDisabledSources: () => this.ctx.disabledSources,
       toggleSource: (name: string) => {
         const reenabling = this.ctx.disabledSources.has(name);
-        if (reenabling && !isProUser()) {
+        if (reenabling && isFreeSourceCapActive() && !isProUser()) {
           const allSources = this.getAllSourceNames();
           const currentlyEnabled = allSources.filter(n => !this.ctx.disabledSources.has(n)).length;
           if (currentlyEnabled + 1 > FREE_MAX_SOURCES) {
@@ -2209,7 +2210,7 @@ export class EventHandlerManager implements AppModule {
         }
       },
       setSourcesEnabled: (names: string[], enabled: boolean) => {
-        if (enabled && !isProUser()) {
+        if (enabled && isFreeSourceCapActive() && !isProUser()) {
           const allSources = this.getAllSourceNames();
           const currentlyEnabled = allSources.filter(n => !this.ctx.disabledSources.has(n)).length;
           const wouldEnable = names.filter(n => this.ctx.disabledSources.has(n) && allSources.includes(n)).length;

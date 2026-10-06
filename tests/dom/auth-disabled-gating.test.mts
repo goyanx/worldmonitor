@@ -43,6 +43,7 @@ import {
   resolveExportLock,
   resolveTabCap,
 } from '@/services/gates/export-resolver';
+import { isFreePanelCapActive, isFreeSourceCapActive } from '@/config/panels';
 
 /** A signed-out visitor on a stack with no entitlement backend. */
 const ANON_SESSION = { user: null, isPending: false } as never;
@@ -103,5 +104,18 @@ describe('client-side takeaways in an auth-disabled build', () => {
     expect(resolveExportLock(ANON_GATE_INPUT)).toBe('anonymous');
     expect(resolveAvailableExportFormats(ANON_GATE_INPUT)).toEqual([]);
     expect(resolveTabCap(ANON_GATE_INPUT, 99)).toMatchObject({ allowed: false });
+  });
+});
+
+describe('free-tier caps in an auth-disabled build', () => {
+  it('does not cap enabled panels or news sources', () => {
+    expect(isFreePanelCapActive()).toBe(false);
+    expect(isFreeSourceCapActive()).toBe(false);
+  });
+
+  it('restores both caps when the flag is off', () => {
+    authDisabled.value = false;
+    expect(isFreePanelCapActive()).toBe(true);
+    expect(isFreeSourceCapActive()).toBe(true);
   });
 });

@@ -29,6 +29,7 @@ import {
   FREE_MAX_PANELS,
   FREE_MAX_SOURCES,
   countFreePanelCapUsage,
+  isFreeSourceCapActive,
 } from '@/config';
 import {
   sanitizeLayersForVariant,
@@ -3535,7 +3536,9 @@ export class App {
       console.log(`[App] Free tier: enforced ${FREE_MAX_PANELS}-panel limit (disabled over-cap / cw-* panels)`);
     }
 
-    this.reconcileSourceLimitForTier(false);
+    // Auth-disabled builds have no source cap: take the restore branch so any
+    // sources a previous capped run auto-disabled come back on.
+    this.reconcileSourceLimitForTier(!isFreeSourceCapActive());
     return panelsChanged;
   }
 

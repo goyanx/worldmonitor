@@ -1284,6 +1284,18 @@ export function isFreePanelCapActive(): boolean {
 }
 export const FREE_MAX_SOURCES = 80;
 
+/**
+ * Is the free-tier source cap enforced at all?
+ *
+ * False in `VITE_DISABLE_AUTH` builds, for the same reason as
+ * isFreePanelCapActive: the cap is a browser-side upsell with no plan to buy.
+ * FREE_MAX_SOURCES itself stays exported because the storage migrations use it
+ * to reconstruct historical capped states, independent of this switch.
+ */
+export function isFreeSourceCapActive(): boolean {
+  return !isAuthDisabled();
+}
+
 export function isFreePanelCapCounted(key: string): boolean {
   return key !== 'map' && !key.startsWith('cw-');
 }
