@@ -104,6 +104,7 @@ export const COMMANDS: Command[] = [
   { id: 'panel:africa', keywords: ['africa news', 'africa', 'african', 'sahel'], label: 'Panel: Africa', icon: '\u{1F30D}', category: 'panels' },
   { id: 'panel:latam', keywords: ['latin america news', 'latam news', 'latin america', 'south america'], label: 'Panel: Latin America', icon: '\u{1F30E}', category: 'panels' },
   { id: 'panel:asia', keywords: ['asia news', 'asia-pacific news', 'asia', 'asia pacific', 'indo-pacific'], label: 'Panel: Asia-Pacific', icon: '\u{1F30F}', category: 'panels' },
+  { id: 'panel:philippines', keywords: ['philippines news', 'philippine news', 'philippines', 'gma news', 'abs-cbn', 'manila'], label: 'Panel: Philippines News', icon: '\u{1F1F5}\u{1F1ED}', category: 'panels' },
   { id: 'panel:energy', keywords: ['energy', 'resources', 'oil news'], label: 'Panel: Energy & Resources', icon: '\u26A1', category: 'panels' },
   { id: 'panel:energy-complex', keywords: ['energy complex', 'oil markets', 'gas markets', 'energy prices'], label: 'Panel: Energy Complex', icon: '\u{1F6E2}\uFE0F', category: 'panels' },
   { id: 'panel:oil-inventories', keywords: ['oil inventories', 'crude stocks', 'strategic petroleum', 'spr', 'petroleum reserve', 'oil stocks', 'eia inventories', 'iea stocks', 'days of cover', 'oil reserves', 'gas storage'], label: 'Panel: Oil Inventories', icon: '\u{1F6E2}\uFE0F', category: 'panels' },

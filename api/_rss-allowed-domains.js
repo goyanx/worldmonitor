@@ -335,6 +335,7 @@ export default [
   "www.lorientlejour.com",
   "www.lowyinstitute.org",
   "www.lrt.lt",
+  "www.manilatimes.net",
   "www.mei.edu",
   "www.militarytimes.com",
   "www.mining-journal.com",

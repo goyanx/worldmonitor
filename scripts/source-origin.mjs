@@ -518,6 +518,7 @@ const HOST_ORIGINS = Object.freeze({
   'www.rappler.com': 'PH',
   'data.gmanetwork.com': 'PH',
   'news.abs-cbn.com': 'PH',
+  'www.manilatimes.net': 'PH',
   'amti.csis.org': 'US',
   'www.navalnews.com': 'FR',
   'www.reddit.com': 'US',

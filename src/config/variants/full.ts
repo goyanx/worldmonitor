@@ -32,6 +32,7 @@ export const DEFAULT_PANELS: Record<string, PanelConfig> = {
   africa: { name: 'Africa', enabled: true, priority: 1 },
   latam: { name: 'Latin America', enabled: true, priority: 1 },
   asia: { name: 'Asia-Pacific', enabled: true, priority: 1 },
+  philippines: { name: 'Philippines News', enabled: true, priority: 1 },
   energy: { name: 'Energy & Resources', enabled: true, priority: 1 },
   gov: { name: 'Government', enabled: true, priority: 1 },
   thinktanks: { name: 'Think Tanks', enabled: true, priority: 1 },
