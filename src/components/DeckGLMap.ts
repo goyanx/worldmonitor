@@ -621,6 +621,7 @@ export class DeckGLMap {
   private clearTrailsBtn: HTMLButtonElement | null = null;
   private militaryVessels: MilitaryVessel[] = [];
   private militaryVesselClusters: MilitaryVesselCluster[] = [];
+  private maritimeVesselsFromNews: any[] = [];
   private serverBases: MilitaryBaseEnriched[] = [];
   private serverBaseClusters: ServerBaseCluster[] = [];
   private serverBasesLoaded = false;
@@ -2194,6 +2195,11 @@ export class DeckGLMap {
     // Protests layer (Supercluster-based deck.gl layers)
     if (mapLayers.protests && this.protests.length > 0) {
       layers.push(...this.createProtestClusterLayers());
+    }
+
+    // Maritime vessels from news layer
+    if (mapLayers.maritimeVesselsFromNews && this.maritimeVesselsFromNews.length > 0) {
+      layers.push(this.createMaritimeVesselsFromNewsLayer());
     }
 
     // Military vessels layer
@@ -3938,6 +3944,39 @@ export class DeckGLMap {
       radiusMinPixels: 4,
       radiusMaxPixels: 12,
       pickable: true,
+    });
+  }
+
+  private createMaritimeVesselsFromNewsLayer(): ScatterplotLayer {
+    return new ScatterplotLayer({
+      id: 'maritime-vessels-from-news-layer',
+      data: this.maritimeVesselsFromNews,
+      getPosition: (d) => [d.lon, d.lat],
+      getRadius: (d) => {
+        // Size by threat level: critical=12000, high=8000, medium=5000, low=3000
+        const threatMap = { critical: 12000, high: 8000, medium: 5000, low: 3000 };
+        return threatMap[d.threat_level] || 5000;
+      },
+      getFillColor: (d) => {
+        // Color by threat level: critical=red, high=orange, medium=yellow, low=lightblue
+        const colorMap = {
+          critical: [255, 0, 0, 200],           // Red
+          high: [255, 165, 0, 200],             // Orange
+          medium: [255, 255, 0, 200],           // Yellow
+          low: [173, 216, 230, 200],            // Light blue
+        };
+        return colorMap[d.threat_level] || [0, 100, 255, 200];
+      },
+      radiusMinPixels: 4,
+      radiusMaxPixels: 25,
+      pickable: true,
+      stroked: true,
+      getLineColor: [255, 255, 255, 100] as [number, number, number, number],
+      lineWidthMinPixels: 1,
+      updateTriggers: {
+        getRadius: [this.maritimeVesselsFromNews],
+        getFillColor: [this.maritimeVesselsFromNews],
+      },
     });
   }
 

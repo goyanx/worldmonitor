@@ -2,7 +2,7 @@
 ## Observed Source Inventory
 
 {/* BEGIN GENERATED SOURCE ATTRIBUTION */}
-This generated inventory covers **776 active source hosts** representing **762 active providers** (**342 structured/API**, **466 feed**, and **30 operational-status** hosts). It is derived from source declarations in `scripts/`, `server/`, `api/`, and `src/`. Each row shows the configured provider identity and where the source is referenced. Syndication transports such as FeedBurner and Google News remain listed as hosts and are not counted as publishers.
+This generated inventory covers **777 active source hosts** representing **763 active providers** (**343 structured/API**, **466 feed**, and **30 operational-status** hosts). It is derived from source declarations in `scripts/`, `server/`, `api/`, and `src/`. Each row shows the configured provider identity and where the source is referenced. Syndication transports such as FeedBurner and Google News remain listed as hosts and are not counted as publishers.
 
 | Provider | Observed surface |
 | --- | --- |
@@ -179,6 +179,7 @@ This generated inventory covers **776 active source hosts** representing **762 a
 | data-api.ecb.europa.eu (data-api.ecb.europa.eu) | structured — scripts/seed-ecb-fx-rates.mjs, scripts/seed-ecb-short-rates.mjs, scripts/seed-yield-curve-eu.mjs |
 | data.api.abs.gov.au (data.api.abs.gov.au) | structured — scripts/seed-world-cpi-abs.mjs |
 | data.ecb.europa.eu (data.ecb.europa.eu) | structured — scripts/seed-fsi-eu.mjs |
+| data.gmanews.tv (data.gmanews.tv) | structured — scripts/seed-philippine-maritime-agencies.mjs |
 | data.humdata.org (data.humdata.org) | structured — scripts/_conflict-hapi.mjs, scripts/benchmark-resilience-external.mjs, scripts/seed-resilience-static.mjs |
 | data.norges-bank.no (data.norges-bank.no) | structured — scripts/seed-yield-curve-no.mjs |
 | data.snb.ch (data.snb.ch) | structured — scripts/seed-yield-curve-ch.mjs |
@@ -432,7 +433,7 @@ This generated inventory covers **776 active source hosts** representing **762 a
 | news.cgtn.com (news.cgtn.com) | Excluded / candidate — No current fetch observed |
 | news.crunchbase.com (news.crunchbase.com) | feed+structured — server/worldmonitor/news/v1/_feeds.ts, src/config/feeds.ts, src/config/variants/tech.ts |
 | news.err.ee (news.err.ee) | feed — server/worldmonitor/news/v1/_feeds.ts, src/config/feeds.ts |
-| news.google.com (news.google.com) | feed+structured (syndication transport) — scripts/source-catalog-identity.mjs, scripts/validate-rss-feeds.mjs, server/worldmonitor/intelligence/v1/_country-coverage-feeds.ts, server/worldmonitor/market/v1/stock-news-search.ts, +5 more |
+| news.google.com (news.google.com) | feed+structured (syndication transport) — scripts/seed-philippine-maritime-agencies.mjs, scripts/source-catalog-identity.mjs, scripts/validate-rss-feeds.mjs, server/worldmonitor/intelligence/v1/_country-coverage-feeds.ts, +6 more |
 | news.mit.edu (news.mit.edu) | feed+structured — src/config/feeds.ts, src/config/variants/tech.ts |
 | news.mongabay.com (news.mongabay.com) | feed — server/worldmonitor/news/v1/_feeds.ts, src/config/feeds.ts |
 | news.tuoitre.vn (news.tuoitre.vn) | feed — src/config/feeds.ts |

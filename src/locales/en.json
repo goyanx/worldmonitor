@@ -1404,6 +1404,7 @@
         "pipelines": "Pipelines",
         "militaryActivity": "Military Activity",
         "shipTraffic": "Ship Traffic",
+        "maritimeVesselsFromNews": "Vessels from News",
         "flightDelays": "Aviation",
         "protests": "Protests",
         "ucdpEvents": "Armed Conflict Events",

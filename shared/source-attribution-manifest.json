@@ -2905,6 +2905,20 @@
       ]
     },
     {
+      "host": "data.gmanews.tv",
+      "provider": "data.gmanews.tv",
+      "kind": "structured",
+      "observed": true,
+      "license": "Provider terms for this upstream API/dataset; verify before redistribution",
+      "attribution": "Credit data.gmanews.tv and link to the original upstream API/dataset.",
+      "status": "terms-review",
+      "references": [
+        {
+          "path": "scripts/seed-philippine-maritime-agencies.mjs"
+        }
+      ]
+    },
+    {
       "host": "data.humdata.org",
       "provider": "data.humdata.org",
       "kind": "structured",
@@ -6623,6 +6637,9 @@
       "attribution": "Credit news.google.com and link to the original feed publisher.",
       "status": "terms-review",
       "references": [
+        {
+          "path": "scripts/seed-philippine-maritime-agencies.mjs"
+        },
         {
           "path": "scripts/source-catalog-identity.mjs"
         },

@@ -345,6 +345,7 @@ const BOOTSTRAP_KEYS = {
   crossSourceSignals: 'intelligence:cross-source-signals:v1',
   sanctionsEntities: 'sanctions:entities:v1',
   radiationWatch:    'radiation:observations:v1',
+  maritimeVesselsFromNews: 'maritime:vessels-from-news:v1',
   consumerPricesOverview:   'consumer-prices:overview:ae',
   consumerPricesCategories: 'consumer-prices:categories:ae:30d',
   consumerPricesMovers:     'consumer-prices:movers:ae:30d',
@@ -904,6 +905,7 @@ const SEED_META = {
     },
   },
   crossStraitActivityJapanMod:  { key: 'seed-meta:military:cross-strait-activity:japan-mod', maxStaleMin: 720 },
+  maritimeVesselsFromNews: { key: 'seed-meta:maritime:vessels-from-news', maxStaleMin: 120, minRecordCount: 10 },
   chinaPolicyEvents: { key: 'seed-meta:china:policy-events', maxStaleMin: 2_160 },
   // decisionGroups (#6060): the seeder's afterPublish diagnostics name which
   // groups are quiet, stale, or unavailable, so a shortfall is actionable

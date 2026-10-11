@@ -74,6 +74,7 @@ export const LAYER_REGISTRY: Record<keyof MapLayers, LayerDefinition> = {
   datacenters:              def('datacenters',              '&#128421;', 'aiDataCenters',            'AI Data Centers'),
   military:                 def('military',                 '&#9992;',   'militaryActivity',         'Military Activity'),
   ais:                      def('ais',                      '&#128674;', 'shipTraffic',              'Ship Traffic'),
+  maritimeVesselsFromNews:  def('maritimeVesselsFromNews',  '&#128674;', 'maritimeVesselsFromNews',  'Vessels from News', ['deck', 'globe']),
   tradeRoutes:              def('tradeRoutes',              '&#9875;',   'tradeRoutes',              'Trade Routes'),
   flights:                  def('flights',                  '&#9992;',   'flightDelays',             'Aviation'),
   protests:                 def('protests',                 '&#128226;', 'protests',                 'Protests'),
@@ -284,6 +285,23 @@ export const LAYER_EXPLANATIONS: Partial<Record<keyof MapLayers, LayerExplanatio
     ],
     related: ['Supply Chain panel', 'Chokepoint strip', 'Military vessels', 'Country brief AIS signals'],
     evidence: ['docs/features.mdx', 'docs/architecture.mdx', 'src/services/maritime/index.ts', 'scripts/ais-relay.cjs'],
+  },
+  maritimeVesselsFromNews: {
+    key: 'maritimeVesselsFromNews',
+    coverage: 'fallback',
+    category: 'Maritime Intelligence',
+    purpose: 'Displays vessel positions extracted from maritime news reports and shipping intelligence.',
+    source: 'News digest analysis with port location mapping from major global maritime hubs.',
+    freshness: '2 hours; updated when maritime news refresh completes.',
+    confidence: 'Medium - based on news mentions with geolocation inference from port names.',
+    limitations: [
+      'Locations inferred from port mentions, not GPS coordinates.',
+      'Only vessels mentioned in curated news feeds.',
+      'No real-time AIS validation of vessel positions.',
+      'Threat levels derived from news article keywords, may not reflect actual maritime incidents.'
+    ],
+    related: ['Ship Traffic (AIS)', 'Strategic Waterways', 'Live News panel'],
+    evidence: ['scripts/seed-maritime-vessels-from-news.mjs', 'src/components/DeckGLMap.ts', 'src/config/panels.ts'],
   },
   waterways: {
     key: 'waterways',
