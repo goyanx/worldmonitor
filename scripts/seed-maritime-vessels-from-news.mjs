@@ -18,6 +18,7 @@ import {
   loadEnvFile,
   runSeed,
 } from './_seed-utils.mjs';
+import { decodeHtmlEntities } from './_html-entities.mjs';
 
 loadEnvFile(import.meta.url);
 
@@ -39,15 +40,46 @@ const MAJOR_PORTS = {
   'Bangkok': { lat: 13.5505, lon: 100.4954 },
   'Singapore Strait': { lat: 1.3521, lon: 103.8198 },
   'Strait of Hormuz': { lat: 26.1, lon: 56.5 },
+  // South China Sea / Philippine waters — the feed's home beat.
+  'Scarborough Shoal': { lat: 15.15, lon: 117.76 },
+  'Bajo de Masinloc': { lat: 15.15, lon: 117.76 },
+  'Panatag Shoal': { lat: 15.15, lon: 117.76 },
+  'Ayungin Shoal': { lat: 9.74, lon: 115.87 },
+  'Second Thomas Shoal': { lat: 9.74, lon: 115.87 },
+  'Escoda Shoal': { lat: 9.75, lon: 116.48 },
+  'Sabina Shoal': { lat: 9.75, lon: 116.48 },
+  'Pag-asa Island': { lat: 11.05, lon: 114.28 },
+  'Thitu Island': { lat: 11.05, lon: 114.28 },
+  'Mischief Reef': { lat: 9.9, lon: 115.53 },
+  'Spratly': { lat: 10.0, lon: 114.5 },
+  'West Philippine Sea': { lat: 12.5, lon: 117.5 },
+  'WPS': { lat: 12.5, lon: 117.5 },
+  'South China Sea': { lat: 13.0, lon: 114.5 },
+  'Taiwan Strait': { lat: 24.5, lon: 119.5 },
+  'Luzon Strait': { lat: 20.5, lon: 121.5 },
+  'Subic': { lat: 14.79, lon: 120.27 },
+  'Batangas': { lat: 13.75, lon: 121.05 },
+  'Palawan': { lat: 9.75, lon: 118.75 },
+  'Cebu': { lat: 10.3, lon: 123.9 },
+  'Zamboanga': { lat: 6.9, lon: 122.07 },
+  'Red Sea': { lat: 20.0, lon: 38.5 },
+  'Bab el-Mandeb': { lat: 12.6, lon: 43.3 },
+  'Gulf of Aden': { lat: 12.5, lon: 47.5 },
+  'Black Sea': { lat: 43.5, lon: 34.0 },
 };
 
-// News keywords indicating maritime vessel presence
-const VESSEL_KEYWORDS = [
-  'container ship', 'bulk carrier', 'tanker', 'cargo vessel', 'freighter',
-  'containership', 'vessel', 'ship', 'shipping', 'maritime',
-  'port', 'strait', 'canal', 'passage', 'shipping route',
-  'merchant', 'cargo', 'import', 'export'
-];
+// A headline counts as a vessel report only when it names a vessel. Whole words
+// only: substring matching turned "report", "support" and "leadership" into ships.
+const VESSEL_TERM_RE = /\b(container ?ships?|bulk carriers?|cargo (?:ships?|vessels?)|oil tankers?|tankers?|freighters?|warships?|battleships?|destroyers?|frigates?|corvettes?|submarines?|aircraft carriers?|coast guard|navy (?:ships?|vessels?|boats?)|militia vessels?|fishing (?:boats?|vessels?)|trawlers?|tugboats?|barges?|ferr(?:y|ies)|motorboats?|speedboats?|bancas?|boats?|vessels?|ships?|flotilla|fleet)\b/i;
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Longest names first so "Singapore Strait" wins over "Singapore".
+const PLACE_MATCHERS = Object.entries(MAJOR_PORTS)
+  .sort(([a], [b]) => b.length - a.length)
+  .map(([name, coords]) => ({ name, coords, re: new RegExp(`\\b${escapeRegExp(name)}\\b`, name === 'WPS' ? '' : 'i') }));
 
 const THREAT_LEVEL_KEYWORDS = {
   critical: ['attack', 'struck', 'seized', 'hijacked', 'incident', 'emergency'],
@@ -75,24 +107,15 @@ function extractThreatLevel(title) {
 }
 
 /**
- * Extract vessel name from article title
+ * Name the vessel when the headline does (hull prefix or quoted name);
+ * otherwise fall back to the vessel term it used.
  */
 function extractVesselName(title) {
-  // Look for quoted vessel names or vessel type + name patterns
-  const quotedMatch = title.match(/['"“]([^'”"]*)(?:ship|vessel|freighter)['"”]|(?:vessel|ship)\\s+[\"'']?([^'\"\".,;:!?]+)[\"'']?/i);
-  if (quotedMatch) {
-    return quotedMatch[1] || quotedMatch[2] || 'Unnamed vessel';
-  }
-
-  // Fallback: use first 3 words if they contain a vessel keyword
-  const words = title.split(/\s+/);
-  for (let i = 0; i < Math.min(3, words.length); i++) {
-    if (VESSEL_KEYWORDS.some(kw => title.toLowerCase().includes(kw))) {
-      return words.slice(0, Math.min(i + 2, words.length)).join(' ');
-    }
-  }
-
-  return 'Unnamed vessel';
+  const hull = title.match(/\b(?:BRP|MV|M\/V|MT|M\/T|USS|HMS|CCG|FV|F\/B)\s+[A-Z0-9][\w'-]*(?:\s+[A-Z0-9][\w'-]*){0,2}/);
+  if (hull) return hull[0];
+  const term = title.match(VESSEL_TERM_RE);
+  if (!term) return 'Unnamed vessel';
+  return term[1].charAt(0).toUpperCase() + term[1].slice(1).toLowerCase();
 }
 
 /**
@@ -102,7 +125,7 @@ async function fetchGmaNewsRss() {
   console.log('Fetching GMA News RSS feed...');
   const CHROME_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
   try {
-    const response = await fetch('https://data.gmanews.tv/gno/rss/news/feed.xml', {
+    const response = await fetch('https://data.gmanetwork.com/gno/rss/news/feed.xml', {
       headers: {
         'User-Agent': CHROME_UA,
         'Accept': 'application/xml, text/xml, */*',
@@ -117,47 +140,31 @@ async function fetchGmaNewsRss() {
     const xmlText = await response.text();
     console.log(`  Fetched ${xmlText.length} bytes of XML`);
 
-    const { XMLParser } = await import('fast-xml-parser');
-    const parser = new XMLParser({
-      attributeNamePrefix : "@_",
-      attrNodeName: "attr",
-      textNodeName : "#text",
-      ignoreAttributes : false,
-      ignoreNameSpace : false,
-      allowBooleanAttributes : false,
-      parseNodeValue : true,
-      parseAttributeValue : false,
-      trimValues: true,
-      cdataTagName: "__cdata",
-      cdataPositionChar: "\\c",
-      duplicateAttributeName: "_1",
-      duplicateAttributeValue: "_2",
-      parseTrueNumberOnly: false,
-      arrayMode: false,
-      ignoreWhitespace : true,
-      attrsAsObject: true,
-      stripWhiteSpace: true,
-    });
+    // Dependency-free item extraction: the self-host runtime image ships no
+    // XML parser (see docker/runtime-package.json), same as seed-climate-news.
+    const readTag = (block, tag) => {
+      const match = block.match(new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)</${tag}>`, 'i'));
+      if (!match) return '';
+      return decodeHtmlEntities(match[1].replace(/^\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*$/, '$1')).trim();
+    };
 
-    const jsonResult = parser.parse(xmlText);
-
-    // Extract items from RSS structure
-    const rss = jsonResult.rss || jsonResult.RSS;
-    if (!rss) {
+    if (!/<rss\b/i.test(xmlText)) {
       throw new Error('Invalid RSS format: missing rss element');
     }
 
-    const channel = rss.channel;
-    if (!channel) {
-      throw new Error('Invalid RSS format: missing channel element');
+    const items = [];
+    const itemRe = /<item\b[^>]*>([\s\S]*?)<\/item>/gi;
+    for (let match = itemRe.exec(xmlText); match; match = itemRe.exec(xmlText)) {
+      const block = match[1];
+      items.push({
+        title: readTag(block, 'title'),
+        description: readTag(block, 'description'),
+        link: readTag(block, 'link') || readTag(block, 'guid'),
+        pubDate: readTag(block, 'pubDate') || readTag(block, 'dc:date'),
+      });
     }
-
-    let items = channel.item;
-    if (!items) {
+    if (items.length === 0) {
       console.warn('  No items found in RSS feed');
-      items = [];
-    } else if (!Array.isArray(items)) {
-      items = [items];
     }
 
     console.log(`  Found ${items.length} items in RSS feed`);
@@ -167,7 +174,7 @@ async function fetchGmaNewsRss() {
       if (typeof title !== 'string') return '';
       return title
         .replace(/<[^>]*>/g, '')
-        .replace(/[\\x00-\\x1f\\x7f]/g, '')
+        .replace(/[\x00-\x1f\x7f]/g, '')
         .slice(0, 500)
         .trim();
     }
@@ -254,41 +261,32 @@ async function extractVesselsFromNews() {
   try {
     const newsItems = await fetchGmaNewsRss();
 
-    // Filter for maritime-relevant articles
-    const maritimeNews = newsItems.filter(item =>
-      VESSEL_KEYWORDS.some(kw =>
-        (item.title || '').toLowerCase().includes(kw)
-      )
-    );
-
-    // Build vessel records
+    // A vessel report needs both a vessel term and a place we can put on the map.
+    // The headline is authoritative; the description only helps locate it.
     const vessels = [];
-    for (const article of maritimeNews) {
+    for (const article of newsItems) {
       const title = article.title || '';
-      const lowerTitle = title.toLowerCase();
+      if (!VESSEL_TERM_RE.test(title)) continue;
 
-      // Try to match a known port/straits name
-      let matched = false;
-      for (const [portName, coords] of Object.entries(MAJOR_PORTS)) {
-        if (lowerTitle.includes(portName.toLowerCase())) {
-          vessels.push({
-            id: `news-vessel-${portName.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-            name: extractVesselName(title),
-            lat: coords.lat,
-            lon: coords.lon,
-            port: portName,
-            source: 'news-maritime-intel',
-            article_url: article.link || '',
-            article_title: title,
-            article_ts: new Date(article.pubDate || article.date || Date.now()).getTime(),
-            threat_level: extractThreatLevel(title),
-          });
-          matched = true;
-          break; // one match per article
-        }
-      }
+      const description = (article.rawDescription || '').replace(/<[^>]*>/g, ' ');
+      const place = PLACE_MATCHERS.find(({ re }) => re.test(title))
+        || PLACE_MATCHERS.find(({ re }) => re.test(description));
+      if (!place) continue;
 
-      // If no known port matched, we skip (could optionally use a fallback)
+      const slug = place.name.replace(/\s+/g, '-').toLowerCase();
+      vessels.push({
+        // Stable per article so a re-seed does not mint a new marker identity.
+        id: `news-vessel-${slug}-${article.link || title}`,
+        name: extractVesselName(title),
+        lat: place.coords.lat,
+        lon: place.coords.lon,
+        port: place.name,
+        source: 'news-maritime-intel',
+        article_url: article.link || '',
+        article_title: title,
+        article_ts: new Date(article.pubDate || Date.now()).getTime(),
+        threat_level: extractThreatLevel(title),
+      });
     }
 
     return vessels;

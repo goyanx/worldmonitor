@@ -157,6 +157,7 @@ import type { RenewableInstallation } from '@/services/renewable-installations';
 import type { SpeciesRecovery } from '@/services/conservation-data';
 import { getCountriesGeoJson, getCountryAtCoordinates, getCountryBbox, getCountryCentroid } from '@/services/country-geometry';
 import type { DiseaseOutbreakItem } from '@/services/disease-outbreaks';
+import type { NewsVessel } from '@/services/maritime-vessels-from-news';
 import type { FeatureCollection, Geometry } from 'geojson';
 import type { ResilienceRankingItem } from '@/services/resilience';
 import {
@@ -621,7 +622,7 @@ export class DeckGLMap {
   private clearTrailsBtn: HTMLButtonElement | null = null;
   private militaryVessels: MilitaryVessel[] = [];
   private militaryVesselClusters: MilitaryVesselCluster[] = [];
-  private maritimeVesselsFromNews: any[] = [];
+  private maritimeVesselsFromNews: NewsVessel[] = [];
   private serverBases: MilitaryBaseEnriched[] = [];
   private serverBaseClusters: ServerBaseCluster[] = [];
   private serverBasesLoaded = false;
@@ -3947,31 +3948,31 @@ export class DeckGLMap {
     });
   }
 
-  private createMaritimeVesselsFromNewsLayer(): ScatterplotLayer {
-    return new ScatterplotLayer({
+  private createMaritimeVesselsFromNewsLayer(): ScatterplotLayer<NewsVessel> {
+    return new ScatterplotLayer<NewsVessel>({
       id: 'maritime-vessels-from-news-layer',
       data: this.maritimeVesselsFromNews,
       getPosition: (d) => [d.lon, d.lat],
       getRadius: (d) => {
         // Size by threat level: critical=12000, high=8000, medium=5000, low=3000
-        const threatMap = { critical: 12000, high: 8000, medium: 5000, low: 3000 };
-        return threatMap[d.threat_level] || 5000;
+        const threatMap: Record<string, number> = { critical: 12000, high: 8000, medium: 5000, low: 3000 };
+        return threatMap[d.threatLevel] || 5000;
       },
       getFillColor: (d) => {
         // Color by threat level: critical=red, high=orange, medium=yellow, low=lightblue
-        const colorMap = {
+        const colorMap: Record<string, [number, number, number, number]> = {
           critical: [255, 0, 0, 200],           // Red
           high: [255, 165, 0, 200],             // Orange
           medium: [255, 255, 0, 200],           // Yellow
           low: [173, 216, 230, 200],            // Light blue
         };
-        return colorMap[d.threat_level] || [0, 100, 255, 200];
+        return colorMap[d.threatLevel] || [0, 100, 255, 200];
       },
-      radiusMinPixels: 4,
+      radiusMinPixels: 7,
       radiusMaxPixels: 25,
       pickable: true,
       stroked: true,
-      getLineColor: [255, 255, 255, 100] as [number, number, number, number],
+      getLineColor: [255, 255, 255, 220] as [number, number, number, number],
       lineWidthMinPixels: 1,
       updateTriggers: {
         getRadius: [this.maritimeVesselsFromNews],
@@ -5100,6 +5101,12 @@ export class DeckGLMap {
         return { html: `<div class="deckgl-tooltip"><strong>${text(obj.title)}</strong><br/>${text(obj.location)}</div>` };
       case 'irradiators-layer':
         return { html: `<div class="deckgl-tooltip"><strong>${text(obj.name)}</strong><br/>${text(obj.type || t('components.deckgl.layers.gammaIrradiators'))}</div>` };
+      case 'maritime-vessels-from-news-layer': {
+        const vessel = obj as NewsVessel;
+        const dateStr = vessel.reportedAt ? new Date(vessel.reportedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+        const metaHtml = `<br/><span style="opacity:.6;font-size:calc(11px * var(--wm-panel-effective-scale, 1))">${text(vessel.location)}${dateStr ? ` | ${dateStr}` : ''} | news report, not AIS</span>`;
+        return { html: `<div class="deckgl-tooltip"><strong>${text(vessel.threatLevel.toUpperCase())}</strong> ${text(vessel.name)}<br/><span style="opacity:.75">${text(vessel.articleTitle.slice(0, 140))}</span>${metaHtml}</div>` };
+      }
       case 'disease-outbreaks-layer': {
         const item = (obj as { item: DiseaseOutbreakItem }).item;
         if (!item) return null;
@@ -7357,6 +7364,11 @@ export class DeckGLMap {
 
   public setDiseaseOutbreaks(outbreaks: DiseaseOutbreakItem[]): void {
     this.diseaseOutbreaks = outbreaks;
+    this.render();
+  }
+
+  public setMaritimeVesselsFromNews(vessels: NewsVessel[]): void {
+    this.maritimeVesselsFromNews = vessels;
     this.render();
   }
 

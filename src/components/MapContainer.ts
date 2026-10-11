@@ -62,6 +62,7 @@ import type { WebcamEntry, WebcamCluster } from '@/generated/client/worldmonitor
 import type { TrafficAnomaly as ProtoTrafficAnomaly, DdosLocationHit } from '@/generated/client/worldmonitor/infrastructure/v1/service_client';
 import type { AcledConflictEvent } from '@/generated/client/worldmonitor/conflict/v1/service_client';
 import type { DiseaseOutbreakItem } from '@/services/disease-outbreaks';
+import type { NewsVessel } from '@/services/maritime-vessels-from-news';
 import type { GetChokepointStatusResponse } from '@/services/supply-chain';
 import type { ChinaCorridorControlTower } from '../../shared/china-corridor-control-towers';
 import { projectChinaCorridorOverlay } from './map/china-corridor-overlay';
@@ -244,6 +245,7 @@ export class MapContainer {
   private cachedGpsJamming: GpsJamHex[] | null = null;
   private cachedSatellites: SatellitePosition[] | null = null;
   private cachedDiseaseOutbreaks: DiseaseOutbreakItem[] | null = null;
+  private cachedMaritimeVesselsFromNews: NewsVessel[] | null = null;
   private cachedCyberThreats: CyberThreat[] | null = null;
   private cachedIranEvents: IranEvent[] | null = null;
   private cachedNewsLocations: NewsLocationMarker[] | null = null;
@@ -821,6 +823,7 @@ export class MapContainer {
     }
     if (this.cachedSatellites) this.setSatellites(this.cachedSatellites);
     if (this.cachedDiseaseOutbreaks) this.setDiseaseOutbreaks(this.cachedDiseaseOutbreaks);
+    if (this.cachedMaritimeVesselsFromNews) this.setMaritimeVesselsFromNews(this.cachedMaritimeVesselsFromNews);
     if (this.cachedCyberThreats) this.setCyberThreats(this.cachedCyberThreats);
     if (this.cachedIranEvents) this.setIranEvents(this.cachedIranEvents);
     if (this.cachedNewsLocations) this.setNewsLocations(this.cachedNewsLocations);
@@ -1270,6 +1273,12 @@ export class MapContainer {
   public setSatellites(positions: SatellitePosition[]): void {
     this.cachedSatellites = positions;
     if (this.useGlobe) { this.globeMap?.setSatellites(positions); return; }
+  }
+
+  public setMaritimeVesselsFromNews(vessels: NewsVessel[]): void {
+    this.cachedMaritimeVesselsFromNews = vessels;
+    if (this.useGlobe) return; // deck.gl only; the globe has no renderer for this layer
+    if (this.useDeckGL) this.deckGLMap?.setMaritimeVesselsFromNews(vessels);
   }
 
   public setDiseaseOutbreaks(outbreaks: DiseaseOutbreakItem[]): void {
@@ -1826,6 +1835,7 @@ export class MapContainer {
     this.cachedGpsJamming = null;
     this.cachedSatellites = null;
     this.cachedDiseaseOutbreaks = null;
+    this.cachedMaritimeVesselsFromNews = null;
     this.cachedCyberThreats = null;
     this.cachedIranEvents = null;
     this.cachedNewsLocations = null;

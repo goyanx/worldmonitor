@@ -210,7 +210,7 @@ async function fetchPhilippineMaritimeNews() {
   const sources = [
     {
       name: 'GMA News',
-      url: 'https://data.gmanews.tv/gno/rss/news/feed.xml',
+      url: 'https://data.gmanetwork.com/gno/rss/news/feed.xml',
       agencyFocus: ['philippine coast guard', 'philippine navy', 'bfar', 'pnp maritime', 'national maritime center']
     },
     {

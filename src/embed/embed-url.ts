@@ -150,6 +150,7 @@ export function createBlankMapLayers(): MapLayers {
     commodityPorts: false,
     webcams: false,
     diseaseOutbreaks: false,
+    maritimeVesselsFromNews: false,
     storageFacilities: false,
     fuelShortages: false,
     liveTankers: false,

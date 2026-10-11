@@ -106,6 +106,7 @@ export const DEFAULT_MAP_LAYERS: MapLayers = {
   resilienceScore: false,
   webcams: false,
   diseaseOutbreaks: false,
+  maritimeVesselsFromNews: false,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -169,6 +170,7 @@ export const MOBILE_DEFAULT_MAP_LAYERS: MapLayers = {
   resilienceScore: false,
   webcams: false,
   diseaseOutbreaks: false,
+  maritimeVesselsFromNews: false,
 };
 
 export const VARIANT_CONFIG: VariantConfig = {

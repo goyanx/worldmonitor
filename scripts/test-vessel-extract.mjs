@@ -42,7 +42,7 @@ function extractVesselName(title) {
 
 async function fetchGmaNewsRss() {
   const CHROME_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
-  const response = await fetch('https://data.gmanews.tv/gno/rss/news/feed.xml', {
+  const response = await fetch('https://data.gmanetwork.com/gno/rss/news/feed.xml', {
     headers: {
       'User-Agent': CHROME_UA,
       'Accept': 'application/xml, text/xml, */*',

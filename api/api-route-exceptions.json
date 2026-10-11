@@ -523,6 +523,13 @@
       "removal_issue": null
     },
     {
+      "path": "api/maritime-vessels-from-news.js",
+      "category": "internal-helper",
+      "reason": "Self-host fork only: read-through of the seeder-owned maritime:vessels-from-news:v1 key for the opt-in Vessels from News map layer. No sebuf toolchain on the self-host build path; not part of the public product API.",
+      "owner": "@goyanx",
+      "removal_issue": null
+    },
+    {
       "path": "api/gpsjam.js",
       "category": "upstream-proxy",
       "reason": "Transparent proxy to gpsjam.org tile/feed. Shape is upstream's.",

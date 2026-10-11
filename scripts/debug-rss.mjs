@@ -4,7 +4,7 @@ async function fetchGmaNewsRss() {
   console.log('Fetching GMA News RSS feed...');
   const CHROME_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
   try {
-    const response = await fetch('https://data.gmanews.tv/gno/rss/news/feed.xml', {
+    const response = await fetch('https://data.gmanetwork.com/gno/rss/news/feed.xml', {
       headers: {
         'User-Agent': CHROME_UA,
         'Accept': 'application/xml, text/xml, */*',

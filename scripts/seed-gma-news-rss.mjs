@@ -103,7 +103,7 @@ async function fetchGmaNewsRss() {
   console.log('Fetching GMA News RSS feed...');
   
   try {
-    const response = await fetch('https://data.gmanews.tv/gno/rss/news/feed.xml', {
+    const response = await fetch('https://data.gmanetwork.com/gno/rss/news/feed.xml', {
       headers: {
         'User-Agent': CHROME_UA,
         'Accept': 'application/xml, text/xml, */*',
@@ -252,7 +252,7 @@ async function run() {
     source: 'GMA News RSS',
     version: INSIGHTS_SOURCE_VERSION,
     // Optional metadata
-    feedUrl: 'https://data.gmanews.tv/gno/rss/news/feed.xml',
+    feedUrl: 'https://data.gmanetwork.com/gno/rss/news/feed.xml',
     fetchedAt: new Date().toISOString(),
   };
   

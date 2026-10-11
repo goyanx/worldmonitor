@@ -211,6 +211,7 @@ import type { ThreatLevel as ClientThreatLevel } from '@/types';
 import type { NewsItem as ProtoNewsItem } from '@/generated/client/worldmonitor/news/v1/service_client';
 import { fetchMarketImplications } from '@/services/market-implications';
 import { fetchDiseaseOutbreaks } from '@/services/disease-outbreaks';
+import { fetchVesselsFromNews } from '@/services/maritime-vessels-from-news';
 import { fetchSocialVelocity } from '@/services/social-velocity';
 import {
   hydrateGeoHubPanelFromClusters,
@@ -1182,6 +1183,7 @@ export class DataLoaderManager implements AppModule {
       tasks.push({ name: 'firms', task: () => runGuarded('fires', () => this.loadFirmsData()) });
     }
     if (this.ctx.mapLayers.natural) tasks.push({ name: 'natural', task: () => runGuarded('natural', () => this.loadNatural()) });
+    if (this.ctx.mapLayers.maritimeVesselsFromNews) tasks.push({ name: 'maritimeVesselsFromNews', task: () => runGuarded('maritimeVesselsFromNews', () => this.loadMaritimeVesselsFromNews()) });
     if (this.ctx.mapLayers.diseaseOutbreaks || shouldLoad('disease-outbreaks')) tasks.push({ name: 'diseaseOutbreaks', task: () => runGuarded('diseaseOutbreaks', () => this.loadDiseaseOutbreaks()) });
     if (shouldLoad('social-velocity')) tasks.push({ name: 'socialVelocity', task: () => runGuarded('socialVelocity', () => this.loadSocialVelocity()) });
     if (hasPremiumAccess() && shouldLoad('wsb-ticker-scanner')) tasks.push({ name: 'wsbTickers', task: () => runGuarded('wsbTickers', () => this.loadWsbTickers()) });
@@ -1345,6 +1347,9 @@ export class DataLoaderManager implements AppModule {
           break;
         case 'diseaseOutbreaks':
           await this.loadDiseaseOutbreaks();
+          break;
+        case 'maritimeVesselsFromNews':
+          await this.loadMaritimeVesselsFromNews();
           break;
         case 'resilienceScore':
           await this.loadResilienceRanking();
@@ -4558,6 +4563,20 @@ export class DataLoaderManager implements AppModule {
     } catch (error) {
       console.error('[App] China activity nowcast failed:', error);
       panel.showError('China activity comparison unavailable', () => void this.loadChinaActivityNowcast());
+    }
+  }
+
+  async loadMaritimeVesselsFromNews(): Promise<void> {
+    try {
+      const vessels = await fetchVesselsFromNews();
+      if (!vessels) {
+        this.ctx.map?.setLayerReady('maritimeVesselsFromNews', false);
+        return;
+      }
+      this.ctx.map?.setMaritimeVesselsFromNews(vessels);
+      this.ctx.map?.setLayerReady('maritimeVesselsFromNews', vessels.length > 0);
+    } catch (e) {
+      console.error('[App] Vessels from news load failed:', e);
     }
   }
 
