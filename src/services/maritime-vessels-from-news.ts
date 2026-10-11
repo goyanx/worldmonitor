@@ -12,6 +12,8 @@ export interface NewsVessel {
   articleTitle: string;
   articleUrl: string;
   reportedAt: number;
+  // Headlines placing a vessel at this location; the marker shows the latest.
+  reportCount: number;
 }
 
 let cachedVessels: NewsVessel[] | null = null;

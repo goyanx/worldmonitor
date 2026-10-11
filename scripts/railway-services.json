@@ -1669,7 +1669,7 @@
       "scripts/seed-maritime-vessels-from-news.mjs",
       "scripts/shared/compare-and-delete-script.cjs"
     ],
-    "cronSchedule": "0 */2 * * *",
+    "cronSchedule": "*/15 * * * *",
     "documentedAt": "scripts/seed-maritime-vessels-from-news.mjs"
   },
   {

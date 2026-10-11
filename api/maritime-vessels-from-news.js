@@ -30,6 +30,7 @@ export function toWebVessel(vessel) {
     articleTitle: String(vessel.article_title ?? ''),
     articleUrl: String(vessel.article_url ?? ''),
     reportedAt: Number.isFinite(vessel.article_ts) ? vessel.article_ts : 0,
+    reportCount: Number.isFinite(vessel.report_count) && vessel.report_count > 0 ? vessel.report_count : 1,
   };
 }
 

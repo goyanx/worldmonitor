@@ -365,6 +365,8 @@ const MARKER_ICONS = {
   // Star - for special markers
   star: 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><polygon points="16,2 20,12 30,12 22,19 25,30 16,23 7,30 10,19 2,12 12,12" fill="white"/></svg>`),
   // Airplane silhouette - top-down with wings and tail (pointing north, rotated by trackDeg)
+  // Ship silhouette, side-on (hull, deckhouse, funnel) - for vessels reported in news
+  ship: 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M1 18 L31 18 L26 27 L6 27 Z M9 11 L21 11 L21 17 L9 17 Z M13 4 L18 4 L18 10 L13 10 Z" fill="white"/></svg>`),
   plane: 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M16 2 L17.5 10 L17 12 L27 17 L27 19 L17 16 L17 24 L20 26.5 L20 28 L16 27 L12 28 L12 26.5 L15 24 L15 16 L5 19 L5 17 L15 12 L14.5 10 Z" fill="white"/></svg>`),
 };
 
@@ -372,6 +374,7 @@ const BASES_ICON_MAPPING = { triangleUp: { x: 0, y: 0, width: 32, height: 32, ma
 const NUCLEAR_ICON_MAPPING = { hexagon: { x: 0, y: 0, width: 32, height: 32, mask: true } };
 const DATACENTER_ICON_MAPPING = { square: { x: 0, y: 0, width: 32, height: 32, mask: true } };
 const AIRCRAFT_ICON_MAPPING = { plane: { x: 0, y: 0, width: 32, height: 32, mask: true } };
+const NEWS_VESSEL_ICON_MAPPING = { ship: { x: 0, y: 0, width: 32, height: 32, mask: true } };
 
 const CONFLICT_COUNTRY_ISO: Record<string, string[]> = {
   iran: ['IR'],
@@ -3948,36 +3951,28 @@ export class DeckGLMap {
     });
   }
 
-  private createMaritimeVesselsFromNewsLayer(): ScatterplotLayer<NewsVessel> {
-    return new ScatterplotLayer<NewsVessel>({
+  private createMaritimeVesselsFromNewsLayer(): IconLayer<NewsVessel> {
+    // A ship glyph, not a dot: these sit among hotspot and conflict circles
+    // that use the same severity colors.
+    const sizeByThreat: Record<string, number> = { critical: 30, high: 26, medium: 23, low: 20 };
+    const colorByThreat: Record<string, [number, number, number, number]> = {
+      critical: [255, 60, 60, 255],
+      high: [255, 165, 0, 255],
+      medium: [255, 235, 60, 255],
+      low: [120, 200, 255, 255],
+    };
+    return new IconLayer<NewsVessel>({
       id: 'maritime-vessels-from-news-layer',
       data: this.maritimeVesselsFromNews,
       getPosition: (d) => [d.lon, d.lat],
-      getRadius: (d) => {
-        // Size by threat level: critical=12000, high=8000, medium=5000, low=3000
-        const threatMap: Record<string, number> = { critical: 12000, high: 8000, medium: 5000, low: 3000 };
-        return threatMap[d.threatLevel] || 5000;
-      },
-      getFillColor: (d) => {
-        // Color by threat level: critical=red, high=orange, medium=yellow, low=lightblue
-        const colorMap: Record<string, [number, number, number, number]> = {
-          critical: [255, 0, 0, 200],           // Red
-          high: [255, 165, 0, 200],             // Orange
-          medium: [255, 255, 0, 200],           // Yellow
-          low: [173, 216, 230, 200],            // Light blue
-        };
-        return colorMap[d.threatLevel] || [0, 100, 255, 200];
-      },
-      radiusMinPixels: 7,
-      radiusMaxPixels: 25,
+      getIcon: () => 'ship',
+      iconAtlas: MARKER_ICONS.ship,
+      iconMapping: NEWS_VESSEL_ICON_MAPPING,
+      getSize: (d) => sizeByThreat[d.threatLevel] ?? 20,
+      getColor: (d) => colorByThreat[d.threatLevel] ?? [120, 200, 255, 255],
+      sizeMinPixels: 18,
+      sizeMaxPixels: 34,
       pickable: true,
-      stroked: true,
-      getLineColor: [255, 255, 255, 220] as [number, number, number, number],
-      lineWidthMinPixels: 1,
-      updateTriggers: {
-        getRadius: [this.maritimeVesselsFromNews],
-        getFillColor: [this.maritimeVesselsFromNews],
-      },
     });
   }
 
@@ -5104,7 +5099,7 @@ export class DeckGLMap {
       case 'maritime-vessels-from-news-layer': {
         const vessel = obj as NewsVessel;
         const dateStr = vessel.reportedAt ? new Date(vessel.reportedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-        const metaHtml = `<br/><span style="opacity:.6;font-size:calc(11px * var(--wm-panel-effective-scale, 1))">${text(vessel.location)}${dateStr ? ` | ${dateStr}` : ''} | news report, not AIS</span>`;
+        const metaHtml = `<br/><span style="opacity:.6;font-size:calc(11px * var(--wm-panel-effective-scale, 1))">${text(vessel.location)}${dateStr ? ` | ${dateStr}` : ''}${vessel.reportCount > 1 ? ` | ${text(vessel.reportCount)} reports` : ''} | news report, not AIS</span>`;
         return { html: `<div class="deckgl-tooltip"><strong>${text(vessel.threatLevel.toUpperCase())}</strong> ${text(vessel.name)}<br/><span style="opacity:.75">${text(vessel.articleTitle.slice(0, 140))}</span>${metaHtml}</div>` };
       }
       case 'disease-outbreaks-layer': {

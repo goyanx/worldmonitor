@@ -16,6 +16,7 @@
 
 import {
   loadEnvFile,
+  readCanonicalValue,
   runSeed,
 } from './_seed-utils.mjs';
 import { decodeHtmlEntities } from './_html-entities.mjs';
@@ -51,6 +52,25 @@ const MAJOR_PORTS = {
   'Pag-asa Island': { lat: 11.05, lon: 114.28 },
   'Thitu Island': { lat: 11.05, lon: 114.28 },
   'Mischief Reef': { lat: 9.9, lon: 115.53 },
+  'Pag-asa': { lat: 11.05, lon: 114.28 },
+  'Kota Island': { lat: 10.67, lon: 114.42 },
+  'Loaita': { lat: 10.67, lon: 114.42 },
+  'Parola Island': { lat: 11.45, lon: 114.35 },
+  'Likas Island': { lat: 11.08, lon: 115.02 },
+  'Lawak Island': { lat: 10.73, lon: 115.8 },
+  'Patag Island': { lat: 10.82, lon: 115.82 },
+  'Panata Island': { lat: 10.72, lon: 114.53 },
+  'Rizal Reef': { lat: 8.37, lon: 115.23 },
+  'Rozul Reef': { lat: 10.62, lon: 116.17 },
+  'Julian Felipe Reef': { lat: 9.99, lon: 114.65 },
+  'Whitsun Reef': { lat: 9.99, lon: 114.65 },
+  'Subi Reef': { lat: 10.92, lon: 114.08 },
+  'Fiery Cross': { lat: 9.55, lon: 112.89 },
+  'Recto Bank': { lat: 11.45, lon: 116.83 },
+  'Reed Bank': { lat: 11.45, lon: 116.83 },
+  'Kalayaan': { lat: 11.05, lon: 114.28 },
+  'Zambales': { lat: 15.3, lon: 119.9 },
+  'Batanes': { lat: 20.45, lon: 121.97 },
   'Spratly': { lat: 10.0, lon: 114.5 },
   'West Philippine Sea': { lat: 12.5, lon: 117.5 },
   'WPS': { lat: 12.5, lon: 117.5 },
@@ -66,11 +86,17 @@ const MAJOR_PORTS = {
   'Bab el-Mandeb': { lat: 12.6, lon: 43.3 },
   'Gulf of Aden': { lat: 12.5, lon: 47.5 },
   'Black Sea': { lat: 43.5, lon: 34.0 },
+  'Hormuz': { lat: 26.1, lon: 56.5 },
+  'Gulf of Oman': { lat: 24.5, lon: 58.5 },
+  'Persian Gulf': { lat: 26.5, lon: 52.0 },
+  'Arabian Sea': { lat: 16.0, lon: 64.0 },
+  'Baltic Sea': { lat: 57.5, lon: 19.5 },
+  'Gulf of Guinea': { lat: 2.5, lon: 3.0 },
 };
 
 // A headline counts as a vessel report only when it names a vessel. Whole words
 // only: substring matching turned "report", "support" and "leadership" into ships.
-const VESSEL_TERM_RE = /\b(container ?ships?|bulk carriers?|cargo (?:ships?|vessels?)|oil tankers?|tankers?|freighters?|warships?|battleships?|destroyers?|frigates?|corvettes?|submarines?|aircraft carriers?|coast guard|navy (?:ships?|vessels?|boats?)|militia vessels?|fishing (?:boats?|vessels?)|trawlers?|tugboats?|barges?|ferr(?:y|ies)|motorboats?|speedboats?|bancas?|boats?|vessels?|ships?|flotilla|fleet)\b/i;
+const VESSEL_TERM_RE = /\b(container ?ships?|bulk carriers?|cargo (?:ships?|vessels?)|oil tankers?|tankers?|freighters?|warships?|battleships?|destroyers?|frigates?|corvettes?|submarines?|aircraft carriers?|coast guard|navy (?:ships?|vessels?|boats?)|militia (?:vessels?|ships?|boats?)|sampans?|fishing (?:boats?|vessels?)|trawlers?|tugboats?|barges?|ferr(?:y|ies)|motorboats?|speedboats?|bancas?|boats?|vessels?|ships?|flotilla|fleet)\b/i;
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -82,11 +108,36 @@ const PLACE_MATCHERS = Object.entries(MAJOR_PORTS)
   .map(([name, coords]) => ({ name, coords, re: new RegExp(`\\b${escapeRegExp(name)}\\b`, name === 'WPS' ? '' : 'i') }));
 
 const THREAT_LEVEL_KEYWORDS = {
-  critical: ['attack', 'struck', 'seized', 'hijacked', 'incident', 'emergency'],
-  high: ['disrupted', 'stranded', 'grounded', 'collision', 'damage'],
-  medium: ['delayed', 'congestion', 'rerouted', 'shortage', 'closure'],
+  critical: ['attack', 'struck', 'strike', 'bomb', 'missile', 'disabled', 'catches fire', 'on fire', 'seized', 'hijacked', 'water cannon', 'rammed', 'ramming', 'collision', 'collide', 'fired on', 'sunk', 'sinks', 'emergency'],
+  high: ['drive away', 'drives away', 'drove away', 'harass', 'blocked', 'blocks', 'intrusion', 'incursion', 'swarm', 'shadow', 'challenge', 'disrupted', 'stranded', 'grounded', 'damage', 'incident'],
+  medium: ['monitor', 'spotted', 'sighted', 'patrol', 'delayed', 'congestion', 'rerouted', 'shortage', 'closure'],
   low: ['vessel', 'ship', 'cargo'],
 };
+
+const THREAT_RANK = { critical: 3, high: 2, medium: 1, low: 0 };
+
+// The digest the dashboard's news panels are built from. Reading it means a
+// vessel story the user can see in a panel is a story this seeder considers.
+const NEWS_DIGEST_KEY = 'news:digest:v1:full:en';
+
+async function fetchDigestItems() {
+  const digest = await readCanonicalValue(NEWS_DIGEST_KEY);
+  const categories = digest?.categories ?? {};
+  const items = [];
+  for (const bucket of Object.values(categories)) {
+    for (const item of bucket?.items ?? []) {
+      if (!item?.title || !item?.link) continue;
+      items.push({
+        title: decodeHtmlEntities(String(item.title)).trim(),
+        link: String(item.link),
+        pubDate: Number.isFinite(item.publishedAt) ? new Date(item.publishedAt).toISOString() : '',
+        rawDescription: decodeHtmlEntities(String(item.snippet ?? '')),
+      });
+    }
+  }
+  console.log(`  Read ${items.length} items from the news digest`);
+  return items;
+}
 
 /**
  * Extract threat level from article title
@@ -258,42 +309,59 @@ async function fetchGmaNewsRss() {
  * Extract vessels from maritime news
  */
 async function extractVesselsFromNews() {
-  try {
-    const newsItems = await fetchGmaNewsRss();
+  // Either source may be down; only fail the run when both are.
+  const [digest, gma] = await Promise.allSettled([fetchDigestItems(), fetchGmaNewsRss()]);
+  if (digest.status === 'rejected') console.warn(`  News digest unavailable: ${digest.reason?.message}`);
+  if (digest.status === 'rejected' && gma.status === 'rejected') throw gma.reason;
+  const newsItems = [
+    ...(digest.status === 'fulfilled' ? digest.value : []),
+    ...(gma.status === 'fulfilled' ? gma.value : []),
+  ];
 
-    // A vessel report needs both a vessel term and a place we can put on the map.
-    // The headline is authoritative; the description only helps locate it.
-    const vessels = [];
-    for (const article of newsItems) {
-      const title = article.title || '';
-      if (!VESSEL_TERM_RE.test(title)) continue;
+  // A vessel report needs both a vessel term and a place we can put on the map.
+  // The headline is authoritative; the description only helps locate it.
+  // One marker per place: outlets re-reporting the same incident would
+  // otherwise stack identical markers on one point.
+  const byPlace = new Map();
+  const seenTitles = new Set();
+  for (const article of newsItems) {
+    const title = article.title || '';
+    if (!VESSEL_TERM_RE.test(title)) continue;
+    const titleKey = title.toLowerCase();
+    if (seenTitles.has(titleKey)) continue;
+    seenTitles.add(titleKey);
 
-      const description = (article.rawDescription || '').replace(/<[^>]*>/g, ' ');
-      const place = PLACE_MATCHERS.find(({ re }) => re.test(title))
-        || PLACE_MATCHERS.find(({ re }) => re.test(description));
-      if (!place) continue;
+    const description = (article.rawDescription || '').replace(/<[^>]*>/g, ' ');
+    const place = PLACE_MATCHERS.find(({ re }) => re.test(title))
+      || PLACE_MATCHERS.find(({ re }) => re.test(description));
+    if (!place) continue;
 
-      const slug = place.name.replace(/\s+/g, '-').toLowerCase();
-      vessels.push({
-        // Stable per article so a re-seed does not mint a new marker identity.
-        id: `news-vessel-${slug}-${article.link || title}`,
-        name: extractVesselName(title),
-        lat: place.coords.lat,
-        lon: place.coords.lon,
-        port: place.name,
-        source: 'news-maritime-intel',
-        article_url: article.link || '',
-        article_title: title,
-        article_ts: new Date(article.pubDate || Date.now()).getTime(),
-        threat_level: extractThreatLevel(title),
-      });
+    const coordKey = `${place.coords.lat},${place.coords.lon}`;
+    const ts = new Date(article.pubDate || Date.now()).getTime();
+    const threat = extractThreatLevel(title);
+    const existing = byPlace.get(coordKey);
+    if (existing) {
+      existing.report_count += 1;
+      if (THREAT_RANK[threat] > THREAT_RANK[existing.threat_level]) existing.threat_level = threat;
+      if (ts <= existing.article_ts) continue;
     }
-
-    return vessels;
-  } catch (err) {
-    console.error('[seed-maritime-vessels-from-news] Extraction failed:', err.message);
-    throw err;
+    byPlace.set(coordKey, {
+      // Stable per place so a re-seed does not mint a new marker identity.
+      id: `news-vessel-${place.name.replace(/\s+/g, '-').toLowerCase()}`,
+      name: extractVesselName(title),
+      lat: place.coords.lat,
+      lon: place.coords.lon,
+      port: place.name,
+      source: 'news-maritime-intel',
+      article_url: article.link || '',
+      article_title: title,
+      article_ts: ts,
+      threat_level: existing ? existing.threat_level : threat,
+      report_count: existing ? existing.report_count : 1,
+    });
   }
+
+  return [...byPlace.values()];
 }
 
 /**
